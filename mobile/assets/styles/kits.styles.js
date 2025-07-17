@@ -203,17 +203,25 @@ export const styles = StyleSheet.create({
     priceContainer: {
       flexDirection: 'row',
       alignItems: 'center',
+      flexWrap: 'nowrap',
+      flex: 1,
     },
     price: {
       fontSize: 16,
       fontWeight: 'bold',
       color: COLORS.primary,
+      flexShrink: 1,
+      flexGrow: 0,
+      minWidth: 0,
     },
     originalPrice: {
       fontSize: 14,
       color: COLORS.textLight,
       textDecorationLine: 'line-through',
       marginLeft: 8,
+      flexShrink: 1,
+      flexGrow: 0,
+      minWidth: 0,
     },
     
     // Modal Styles
@@ -263,17 +271,25 @@ export const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 24,
+      flexWrap: 'nowrap',
+      flex: 1,
     },
     modalPrice: {
       fontSize: 28,
       fontWeight: 'bold',
       color: COLORS.primary,
+      flexShrink: 1,
+      flexGrow: 0,
+      minWidth: 0,
     },
     modalOriginalPrice: {
       fontSize: 20,
       color: COLORS.textLight,
       textDecorationLine: 'line-through',
       marginLeft: 12,
+      flexShrink: 1,
+      flexGrow: 0,
+      minWidth: 0,
     },
     selectionTitle: {
       fontSize: 18,
@@ -307,6 +323,17 @@ export const styles = StyleSheet.create({
     },
     selectedButtonText: {
       color: COLORS.white,
+    },
+    selectionInput: {
+      width: '100%',
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      borderRadius: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: COLORS.text,
+      backgroundColor: COLORS.card,
     },
     quantityContainer: {
       flexDirection: 'row',
@@ -396,7 +423,7 @@ export const styles = StyleSheet.create({
       borderBottomColor: COLORS.border,
     },
     cartItemImage: {
-      width: 60,
+      width: 80,
       height: 60,
       borderRadius: 8,
       marginRight: 12,
@@ -429,6 +456,17 @@ export const styles = StyleSheet.create({
       fontWeight: 'bold',
       color: COLORS.text,
       marginHorizontal: 12,
+    },
+    removeButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: COLORS.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      marginLeft: 8,
     },
     cartFooter: {
       paddingHorizontal: 20,

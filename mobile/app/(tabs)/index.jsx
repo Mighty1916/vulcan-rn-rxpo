@@ -17,7 +17,6 @@ import { useAuth } from '@clerk/clerk-expo';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-
 // Slideshow data - you can replace these with your actual images
 const slideshowData = [
   {

@@ -4,12 +4,16 @@ import { db } from "./config/db.js";
 import { orders, clubApplications } from "./db/schema.js";
 import { eq } from "drizzle-orm";
 import job from './config/cron.js'
+import crypto from "crypto";
+import dotenv from "dotenv";
+import Razorpay from "razorpay";
+dotenv.config();
 
 const app = express();
 const PORT = ENV.PORT || 3000;
 
-if(ENV.NODE_ENV === "production")  job.start()
 
+if(ENV.NODE_ENV === "production")  job.start()
 //if (ENV.NODE_ENV === "production") job.start();
 
 app.use(express.json());
@@ -18,7 +22,7 @@ app.get("/api/orders", (req, res) => {
   res.status(200).json({ success: true }); 
 });
 
-// Create a new order
+// Create a new order only for testing 
 app.post("/api/orders", async (req, res) => {
   try {
     const { userEmail, userID, productName, quantity, total } = req.body;
@@ -104,3 +108,62 @@ app.post("/api/apply", async (req, res) => {
   }
 });
 
+
+const razorpay = new Razorpay({
+  key_id: ENV.RAZORPAY_KEY_ID,
+  key_secret: ENV.RAZORPAY_KEY_SECRET,
+});
+
+// Create Razorpay order
+app.post("/api/create-razorpay-order", async (req, res) => {
+  try {
+    const { amount, currency = "INR", receipt } = req.body;
+    const options = {
+      amount: amount * 100, // amount in paise
+      currency,
+      receipt,
+    };
+    const order = await razorpay.orders.create(options);
+    res.json(order);
+  } catch (error) {
+    console.error("Error creating Razorpay order:", error);
+    res.status(500).json({ error: "Failed to create Razorpay order" });
+  }
+});
+
+// Verify payment and save order
+app.post("/api/verify-razorpay-payment", async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      userEmail,
+      userID,
+      productName,
+      quantity,
+      total
+    } = req.body;
+
+    // 1. Verify signature
+    const generated_signature = crypto
+      .createHmac("sha256", ENV.RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest("hex");
+
+    if (generated_signature !== razorpay_signature) {
+      return res.status(400).json({ error: "Invalid payment signature" });
+    }
+
+    // 2. Save order to DB
+    const newOrder = await db
+      .insert(orders)
+      .values({ userEmail, productName, quantity, total, userID })
+      .returning();
+
+    res.status(201).json({ success: true, order: newOrder[0] });
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
