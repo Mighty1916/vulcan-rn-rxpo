@@ -78,7 +78,7 @@ export default function JoinClubScreen() {
     if (!validateForm()) return;
 
     try {
-      const response = await fetch("http://192.168.211.255:3000/api/apply", {
+      const response = await fetch("https://vulcan-rn-rxpo-3.onrender.com/api/apply", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
