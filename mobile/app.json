@@ -22,7 +22,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo-removebg-preview.png"
     },
     "plugins": [
       "expo-router",
@@ -40,6 +40,7 @@
       "typedRoutes": true
     },
     "extra": {
+      "API_URL": "https://vulcan-rn-rxpo-3.onrender.com/api",
       "router": {},
       "eas": {
         "projectId": "435a03d1-c7ca-4ec9-ac5d-8a10c71f8347"
