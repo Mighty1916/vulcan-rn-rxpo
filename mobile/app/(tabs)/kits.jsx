@@ -196,7 +196,7 @@ export default function KitsScreen() {
     const order = await response.json();
 
     // 2. Show Razorpay WebView
-    setRazorpayOrder({ ...order, key: 'rzp_test_uwAdRpzPQzr6UH' }); // pass your public key here
+    setRazorpayOrder({ ...order, key: 'rzp_test_YpqvHLtGQwud4J' }); // pass your public key here
     setShowRazorpay(true);
   };
 
