@@ -14,6 +14,7 @@ import { Users, Trophy, TrendingUp, User, Settings, Bell } from 'lucide-react-na
 import { styles } from "../../assets/styles/home.styles"
 import { COLORS } from '../../constants/colors';
 import { useAuth } from '@clerk/clerk-expo';
+import { useRouter } from 'expo-router';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -44,6 +45,7 @@ const slideshowData = [
 
 export default function HomeScreen() {
   const { signOut } = useAuth();
+  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef(null);
 
@@ -70,6 +72,21 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
+      {/* Main Action Buttons */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginTop: 16, marginBottom: 8 }}>
+        <TouchableOpacity
+          style={[styles.actionButton, { flex: 1, marginRight: 8, backgroundColor: COLORS.primary }]}
+          onPress={() => router.push('/(tabs)/book-friendly')}
+        >
+          <Text style={[styles.actionText, { color: COLORS.white, fontWeight: 'bold', fontSize: 16 }]}>Book Friendly</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, { flex: 1, marginLeft: 8, backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.primary }]}
+          onPress={() => router.push('/(tabs)/tournaments')}
+        >
+          <Text style={[styles.actionText, { color: COLORS.primary, fontWeight: 'bold', fontSize: 16 }]}>Tournaments</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}

@@ -505,6 +505,7 @@ export const styles = StyleSheet.create({
       borderTopRightRadius: 20,
       maxHeight: '80%',
       paddingTop: 20,
+      paddingBottom: 20
     },
     checkoutHeader: {
       flexDirection: 'row',
