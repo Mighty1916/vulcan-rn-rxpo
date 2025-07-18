@@ -117,19 +117,28 @@ const razorpay = new Razorpay({
 // Create Razorpay order
 app.post("/api/create-razorpay-order", async (req, res) => {
   try {
-    const { amount, currency = "INR", receipt } = req.body;
+    let { amount, currency, receipt } = req.body;
+
+    if (!amount || !receipt) {
+      return res.status(400).json({ error: "Amount and receipt required" });
+    }
+
+    currency = (currency || "INR").toUpperCase(); // Ensure it's uppercase
+
     const options = {
-      amount: amount * 100, // amount in paise
+      amount: Math.floor(Number(amount) * 100), // Convert to number + paise
       currency,
       receipt,
     };
+
     const order = await razorpay.orders.create(options);
-    res.json(order);
+    res.json({ ...order, key: ENV.RAZORPAY_KEY_ID }); // Send key to frontend too
   } catch (error) {
     console.error("Error creating Razorpay order:", error);
     res.status(500).json({ error: "Failed to create Razorpay order" });
   }
 });
+
 
 // Verify payment and save order
 app.post("/api/verify-razorpay-payment", async (req, res) => {
