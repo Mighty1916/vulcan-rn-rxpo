@@ -520,7 +520,7 @@ export default function KitsScreen() {
                 <X size={24} color={COLORS.text} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={[styles.checkoutContent, {flex:1}]} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.checkoutContent} showsVerticalScrollIndicator={false}>
               <Text style={styles.checkoutSectionTitle}>Shipping Details</Text>
               <TextInput
                 style={[styles.selectionInput, { marginBottom: 12 },]}
@@ -572,11 +572,13 @@ export default function KitsScreen() {
               <View style={styles.checkoutTotal}>
                 <Text style={styles.checkoutTotalText}>Total: ₹{getCartTotal()}</Text>
               </View>
-              <TouchableOpacity style={styles.placeOrderButton} onPress={handlePayNow} >
-                <Text style={[styles.placeOrderButtonText]}>Pay Now</Text>
+            </ScrollView>
+            <View style={{ padding: 20, backgroundColor: COLORS.card }}>
+              <TouchableOpacity style={styles.placeOrderButton} onPress={handlePayNow}>
+                <Text style={styles.placeOrderButtonText}>Pay Now</Text>
                 <ArrowRight size={20} color={COLORS.white} />
               </TouchableOpacity>
-            </ScrollView>
+            </View>
           </View>
         </View>
       </Modal>
