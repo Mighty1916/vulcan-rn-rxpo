@@ -520,7 +520,7 @@ export default function KitsScreen() {
                 <X size={24} color={COLORS.text} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.checkoutContent} showsVerticalScrollIndicator={false}>
+            <ScrollView style={[styles.checkoutContent, {flex:1}]} showsVerticalScrollIndicator={false}>
               <Text style={styles.checkoutSectionTitle}>Shipping Details</Text>
               <TextInput
                 style={[styles.selectionInput, { marginBottom: 12 },]}
