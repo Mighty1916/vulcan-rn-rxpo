@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, } from 'react';
 import {
   View,
   Text,
@@ -100,10 +100,13 @@ export default function KitsScreen() {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [filter, setFilter] = useState('All');
-  const [jerseyName, setJerseyName] = useState('');
-  const [jerseyNumber, setJerseyNumber] = useState('');
   const [razorpayOrder, setRazorpayOrder] = useState(null);
   const [showRazorpay, setShowRazorpay] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [checkoutName, setCheckoutName] = useState('');
+  const [checkoutEmail, setCheckoutEmail] = useState('');
+  const [checkoutPhone, setCheckoutPhone] = useState('');
+  const [checkoutAddress, setCheckoutAddress] = useState('');
 
   // Filtered products based on filter state
   const filteredProducts = filter === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.type === filter);
@@ -114,17 +117,6 @@ export default function KitsScreen() {
       Alert.alert('Size Required', 'Please select a size before adding to cart.');
       return;
     }
-    if (selectedProduct.type === 'Jersey') {
-      if (!jerseyName.trim()) {
-        Alert.alert('Name Required', 'Please enter a name for the jersey.');
-        return;
-      }
-      if (!jerseyNumber.trim()) {
-        Alert.alert('Number Required', 'Please enter a number for the jersey.');
-        return;
-      }
-    }
-
     const cartItem = {
       id: Date.now(), // Unique ID for cart item
       productId: selectedProduct.id,
@@ -134,8 +126,6 @@ export default function KitsScreen() {
       quantity: quantity,
       image: selectedProduct.image,
       type: selectedProduct.type,
-      jerseyName: selectedProduct.type === 'Jersey' ? jerseyName : undefined,
-      jerseyNumber: selectedProduct.type === 'Jersey' ? jerseyNumber : undefined,
     };
 
     setCart(prev => [...prev, cartItem]);
@@ -144,8 +134,6 @@ export default function KitsScreen() {
     setShowProductModal(false);
     setSelectedSize('');
     setQuantity(1);
-    setJerseyName('');
-    setJerseyNumber('');
     
     Alert.alert('Added to Cart', `${selectedProduct.name} (${selectedSize}) added to cart!`);
   };
@@ -177,42 +165,51 @@ export default function KitsScreen() {
   };
 
   // Handle checkout
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cart.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to cart before checkout.');
       return;
     }
-    
+    setShowCartModal(false);
+    setShowCheckoutModal(true);
+  };
+
+  // New: handlePayNow to trigger Razorpay
+  const handlePayNow = async () => {
+    if (!checkoutName.trim() || !checkoutEmail.trim() || !checkoutPhone.trim() || !checkoutAddress.trim()) {
+      Alert.alert('Missing Details', 'Please fill all the details.');
+      return;
+    }
     // 1. Create Razorpay order on backend
     const response = await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/create-razorpay-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        amount: getCartTotal(), // in INR
+        amount: getCartTotal(),
         currency: 'INR',
         receipt: `order_rcptid_${Date.now()}`
       })
     });
     const order = await response.json();
-
-    // 2. Show Razorpay WebView
-    setRazorpayOrder({ ...order, key: 'rzp_test_YpqvHLtGQwud4J' }); // pass your public key here
+    setRazorpayOrder({ ...order, key: 'rzp_test_YpqvHLtGQwud4J' });
+    setShowCheckoutModal(false);
     setShowRazorpay(true);
   };
 
-  // 3. Handle Razorpay payment result
+  // Update handleRazorpayClose to use checkout details
   const handleRazorpayClose = async (paymentData) => {
     setShowRazorpay(false);
     if (!paymentData) return;
-
-    // 4. Verify payment and save order on backend
     const verifyRes = await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/verify-razorpay-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...paymentData,
-        userEmail: 'albabkhan1916135@gmail.com',
+        userEmail: checkoutEmail,
         userID: '2',
+        userName: checkoutName,
+        userPhone: checkoutPhone,
+        userAddress: checkoutAddress,
         productName: cart.map(item => item.name).join(', '),
         quantity: cart.reduce((sum, item) => sum + item.quantity, 0),
         total: getCartTotal()
@@ -221,7 +218,11 @@ export default function KitsScreen() {
     const verifyData = await verifyRes.json();
     if (verifyData.success) {
       Alert.alert('Payment Success', 'Your order has been placed!');
-      setCart([]); // clear cart
+      setCart([]);
+      setCheckoutName('');
+      setCheckoutEmail('');
+      setCheckoutPhone('');
+      setCheckoutAddress('');
     } else {
       Alert.alert('Payment Failed', verifyData.error || 'Could not verify payment');
     }
@@ -391,24 +392,6 @@ export default function KitsScreen() {
                   {/* Custom Name/Number for Jersey */}
                   {selectedProduct.type === 'Jersey' && (
                     <>
-                      <Text style={styles.selectionTitle}>Customize Your Jersey</Text>
-                      <TextInput
-                        style={[styles.selectionInput, { marginBottom: 12 }]}
-                        placeholder="Name on Jersey"
-                        value={jerseyName}
-                        onChangeText={setJerseyName}
-                        maxLength={16}
-                        placeholderTextColor={COLORS.textLight}
-                      />
-                      <TextInput
-                        style={styles.selectionInput}
-                        placeholder="Number on Jersey"
-                        value={jerseyNumber}
-                        onChangeText={setJerseyNumber}
-                        keyboardType="numeric"
-                        maxLength={3}
-                        placeholderTextColor={COLORS.textLight}
-                      />
                     </>
                   )}
 
@@ -518,6 +501,82 @@ export default function KitsScreen() {
                 </View>
               </View>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add Checkout Modal after Cart Modal */}
+      <Modal
+        visible={showCheckoutModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCheckoutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.checkoutModal, { flex: 1}]}> 
+            <View style={styles.checkoutHeader}>
+              <Text style={styles.checkoutTitle}>Checkout</Text>
+              <TouchableOpacity onPress={() => setShowCheckoutModal(false)}>
+                <X size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.checkoutContent} showsVerticalScrollIndicator={false}>
+              <Text style={styles.checkoutSectionTitle}>Shipping Details</Text>
+              <TextInput
+                style={[styles.selectionInput, { marginBottom: 12 },]}
+                placeholder="Full Name"
+                value={checkoutName}
+                onChangeText={setCheckoutName}
+                placeholderTextColor={COLORS.textLight}
+              />
+              <TextInput
+                style={[styles.selectionInput, { marginBottom: 12 }]}
+                placeholder="Email"
+                value={checkoutEmail}
+                onChangeText={setCheckoutEmail}
+                keyboardType="email-address"
+                placeholderTextColor={COLORS.textLight}
+              />
+              <TextInput
+                style={[styles.selectionInput, { marginBottom: 12 }]}
+                placeholder="Phone Number"
+                value={checkoutPhone}
+                onChangeText={setCheckoutPhone}
+                keyboardType="phone-pad"
+                placeholderTextColor={COLORS.textLight}
+              />
+              <TextInput
+                style={[styles.selectionInput, { marginBottom: 20 }]}
+                placeholder="Address"
+                value={checkoutAddress}
+                onChangeText={setCheckoutAddress}
+                multiline
+                numberOfLines={3}
+                placeholderTextColor={COLORS.textLight}
+              />
+              <Text style={styles.checkoutSectionTitle}>Payment Mode</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: COLORS.primary }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.white }} />
+                  </View>
+                  <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>Online</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', opacity: 0.4 }}>
+                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: COLORS.border }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.card }} />
+                  </View>
+                  <Text style={{ color: COLORS.textLight, fontWeight: 'bold' }}>Cash on Delivery</Text>
+                </View>
+              </View>
+              <View style={styles.checkoutTotal}>
+                <Text style={styles.checkoutTotalText}>Total: ₹{getCartTotal()}</Text>
+              </View>
+              <TouchableOpacity style={styles.placeOrderButton} onPress={handlePayNow} >
+                <Text style={[styles.placeOrderButtonText]}>Pay Now</Text>
+                <ArrowRight size={20} color={COLORS.white} />
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
