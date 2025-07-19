@@ -7,7 +7,8 @@ export const orders = pgTable("orders", {
     quantity: integer("quantity").default(1),
     total: integer("total").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
-    userID: text("user_id").notNull()
+    userID: text("user_id").notNull(),
+    userAddress: text("address").notNull(),
 }); 
 
 export const clubApplications = pgTable("club_applications", {
