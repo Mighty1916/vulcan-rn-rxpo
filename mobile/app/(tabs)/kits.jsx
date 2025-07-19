@@ -239,7 +239,7 @@ export default function KitsScreen() {
       body: JSON.stringify({
         ...paymentData,
         userEmail: checkoutEmail,
-        userID: '2',
+        userID: '',
         userName: checkoutName,
         userPhone: checkoutPhone,
         userAddress: checkoutAddress,

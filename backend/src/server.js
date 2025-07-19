@@ -25,15 +25,15 @@ app.get("/api/orders", (req, res) => {
 // Create a new order only for testing 
 app.post("/api/orders", async (req, res) => {
   try {
-    const { userEmail, userID, productName, quantity, total } = req.body;
+    const { userEmail, userID, productName, quantity, total, userAddress } = req.body;
 
-    if (!userEmail || !productName || !quantity || !total || !userID) {
+    if (!userEmail || !productName || !quantity || !total || !userID || !userAddress) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const newOrder = await db
       .insert(orders)
-      .values({ userEmail, productName, quantity, total, userID })
+      .values({ userEmail, productName, quantity, total, userID, userAddress })
       .returning();
 
     res.status(201).json(newOrder[0]);
@@ -151,7 +151,8 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
       userID,
       productName,
       quantity,
-      total
+      total,
+      userAddress
     } = req.body;
 
     // 1. Verify signature
@@ -167,7 +168,7 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
     // 2. Save order to DB
     const newOrder = await db
       .insert(orders)
-      .values({ userEmail, productName, quantity, total, userID })
+      .values({ userEmail, productName, quantity, total, userID, userAddress })
       .returning();
 
     res.status(201).json({ success: true, order: newOrder[0] });
