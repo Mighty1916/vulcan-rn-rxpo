@@ -8,7 +8,12 @@ export const orders = pgTable("orders", {
     total: integer("total").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     userID: text("user_id").notNull(),
-    userAddress: text("address").notNull(),
+    userName: varchar("user_name", { length: 255 }),
+    userPhone: varchar("user_phone", { length: 20 }),
+    userAddress: text("user_address"),
+    userPincode: varchar("user_pincode", { length: 10 }),
+    jerseyName: varchar("jersey_name", { length: 32 }),
+    jerseyNumber: varchar("jersey_number", { length: 8 }),
 }); 
 
 export const clubApplications = pgTable("club_applications", {
@@ -19,9 +24,9 @@ export const clubApplications = pgTable("club_applications", {
     address: text("address").notNull(),
     dateOfBirth: varchar("date_of_birth", { length: 20 }).notNull(),
     position: varchar("position", { length: 50 }).notNull(),
-    experience: text("experience"),
+    //experience: text("experience"),
     previousClubs: text("previous_clubs"),
-    emergencyContact: varchar("emergency_contact", { length: 255 }),
-    emergencyPhone: varchar("emergency_phone", { length: 20 }),
+    //emergencyContact: varchar("emergency_contact", { length: 255 }),
+    //emergencyPhone: varchar("emergency_phone", { length: 20 }),
     submittedAt: timestamp("submitted_at").defaultNow()
   });
