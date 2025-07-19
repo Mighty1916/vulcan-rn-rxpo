@@ -1,7 +1,7 @@
 import express from "express";
 import { ENV } from "./config/env.js";
 import { db } from "./config/db.js";
-import { orders, clubApplications } from "./db/schema.js";
+import { orders, clubApplications, friendlyBookings } from "./db/schema.js";
 import { eq } from "drizzle-orm";
 import job from './config/cron.js'
 import crypto from "crypto";
@@ -179,6 +179,24 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
     res.status(201).json({ success: true, order: newOrder[0] });
   } catch (error) {
     console.error("Error verifying payment:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+//friendlt booking endpoint
+app.post("/api/friendly-booking", async (req, res) => {
+  try {
+    const { name, phone, email, teamName, matchGround, date, time } = req.body;
+    if (!name || !phone || !email || !teamName || !matchGround || !date || !time) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const newBooking = await db
+      .insert(friendlyBookings)
+      .values({ name, phone, email, teamName, matchGround, date, time })
+      .returning();
+    res.status(201).json({ success: true, booking: newBooking[0] });
+  } catch (error) {
+    console.error("Error saving booking:", error);
     res.status(500).json({ error: "Something went wrong" });
   }
 });

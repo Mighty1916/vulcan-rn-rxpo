@@ -30,3 +30,15 @@ export const clubApplications = pgTable("club_applications", {
     //emergencyPhone: varchar("emergency_phone", { length: 20 }),
     submittedAt: timestamp("submitted_at").defaultNow()
   });
+
+export const friendlyBookings = pgTable("friendly_bookings", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  teamName: varchar("team_name", { length: 255 }).notNull(),
+  matchGround: varchar("match_ground", { length: 255 }).notNull(),
+  date: varchar("date", { length: 32 }).notNull(),
+  time: varchar("time", { length: 32 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
