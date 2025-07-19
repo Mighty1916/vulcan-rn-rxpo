@@ -10,6 +10,7 @@ import {
   Alert,
   FlatList,
   TextInput, // <-- add this
+  ActivityIndicator,
 } from 'react-native';
 import { 
   ShoppingBag, 
@@ -110,6 +111,8 @@ export default function KitsScreen() {
   const [checkoutJerseyName, setCheckoutJerseyName] = useState('');
   const [checkoutJerseyNumber, setCheckoutJerseyNumber] = useState('');
   const [checkoutPincode, setCheckoutPincode] = useState('');
+  const [isPaying, setIsPaying] = useState(false);
+  const [orders, setOrders] = useState([]); // [{id, date, items, total, status}]
 
   // Filtered products based on filter state
   const filteredProducts = filter === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.type === filter);
@@ -179,6 +182,7 @@ export default function KitsScreen() {
 
   // New: handlePayNow to trigger Razorpay
   const handlePayNow = async () => {
+    if (isPaying) return;
     if (!checkoutName.trim() || !checkoutEmail.trim() || !checkoutPhone.trim() || !checkoutAddress.trim() || !checkoutPincode.trim()) {
       Alert.alert('Missing Details', 'Please fill all the details.');
       return;
@@ -201,20 +205,28 @@ export default function KitsScreen() {
         return;
       }
     }
-    // 1. Create Razorpay order on backend
-    const response = await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/create-razorpay-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: getCartTotal(),
-        currency: 'INR',
-        receipt: `order_rcptid_${Date.now()}`
-      })
-    });
-    const order = await response.json();
-    setRazorpayOrder({ ...order, key: 'rzp_test_YpqvHLtGQwud4J' });
-    setShowCheckoutModal(false);
-    openRazorpayModal();
+    setIsPaying(true);
+    try {
+      // 1. Create Razorpay order on backend
+      const response = await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/create-razorpay-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: getCartTotal(),
+          currency: 'INR',
+          receipt: `order_rcptid_${Date.now()}`
+        })
+      });
+      const order = await response.json();
+      setRazorpayOrder({ ...order, key: 'rzp_test_YpqvHLtGQwud4J' });
+      setShowCheckoutModal(false);
+      openRazorpayModal();
+    } catch (e) {
+      console.error('Payment initiation error:', e);
+      Alert.alert('Error', 'Failed to initiate payment. Please try again.');
+    } finally {
+      setIsPaying(false);
+    }
   };
 
   // Update handleRazorpayClose to use checkout details
@@ -239,6 +251,16 @@ export default function KitsScreen() {
     const verifyData = await verifyRes.json();
     if (verifyData.success) {
       Alert.alert('Payment Success', 'Your order has been placed!');
+      setOrders(prev => [
+        {
+          id: Date.now(),
+          date: new Date().toLocaleString(),
+          items: cart.map(item => ({ ...item })),
+          total: getCartTotal(),
+          status: 'Pending',
+        },
+        ...prev
+      ]);
       setCart([]);
       setCheckoutName('');
       setCheckoutEmail('');
@@ -387,7 +409,7 @@ export default function KitsScreen() {
 
       {/* Filter Tabs */}
       <View style={styles.tabContainer}>
-        {['All', 'Jersey', 'Shorts'].map((tab) => (
+        {['All', 'Jersey', 'Shorts', 'My Orders'].map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tab, filter === tab && styles.activeTab]}
@@ -399,15 +421,48 @@ export default function KitsScreen() {
       </View>
 
       {/* Products Grid */}
-      <FlatList
-        data={filteredProducts}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        columnWrapperStyle={styles.productRow}
-        contentContainerStyle={styles.productsContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      {filter === 'My Orders' ? (
+        <ScrollView style={styles.ordersContainer}>
+          <Text style={styles.sectionTitle}>My Orders</Text>
+          {orders.length === 0 ? (
+            <Text style={{ color: COLORS.textLight, textAlign: 'center', marginTop: 40 }}>No orders yet.</Text>
+          ) : (
+            orders.map(order => (
+              <View key={order.id} style={styles.orderCard}>
+                <View style={styles.orderHeader}>
+                  <Text style={styles.orderId}>Order #{order.id}</Text>
+                  <View style={[styles.statusBadge, {
+                    backgroundColor: order.status === 'Pending' ? COLORS.warning : order.status === 'Delivered' ? COLORS.success : '#e74c3c'
+                  }]}
+                  >
+                    <Text style={styles.statusText}>{order.status}</Text>
+                  </View>
+                </View>
+                <Text style={styles.orderDate}>{order.date}</Text>
+                <View style={styles.orderItems}>
+                  {order.items.map((item, idx) => (
+                    <Text key={idx} style={styles.orderItemText}>{item.name} (Size: {item.size}) x{item.quantity}</Text>
+                  ))}
+                </View>
+                <View style={styles.orderFooter}>
+                  <Text style={styles.orderTotal}>Total: ₹{order.total}</Text>
+                  <Text style={styles.trackingNumber}>ID: {order.id}</Text>
+                </View>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      ) : (
+        <FlatList
+          data={filteredProducts}
+          renderItem={renderProduct}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.productRow}
+          contentContainerStyle={styles.productsContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Product Selection Modal */}
       <Modal
@@ -667,9 +722,12 @@ export default function KitsScreen() {
                 <Text style={styles.checkoutTotalText}>Total: ₹{getCartTotal()}</Text>
               </View>
               <View style={{ padding: 20, backgroundColor: COLORS.card, borderTopWidth: 1, borderTopColor: COLORS.border }}>
-              <TouchableOpacity style={styles.checkoutButton} onPress={handlePayNow}>
-                <Text style={styles.checkoutButtonText}>Pay Now</Text>
-                <ArrowRight size={20} color={COLORS.white} />
+              <TouchableOpacity style={styles.checkoutButton} onPress={handlePayNow} disabled={isPaying}>
+                {isPaying ? (
+                  <ActivityIndicator color={COLORS.white} style={{ marginRight: 8 }} />
+                ) : null}
+                <Text style={styles.checkoutButtonText}>{isPaying ? 'Processing...' : 'Pay Now'}</Text>
+                {!isPaying && <ArrowRight size={20} color={COLORS.white} />}
               </TouchableOpacity>
             </View>
             </ScrollView>
