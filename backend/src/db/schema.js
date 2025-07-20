@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer, varchar } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, varchar, jsonb } from "drizzle-orm/pg-core";
 
 export const orders = pgTable("orders", {
     id: serial("id").primaryKey(),
@@ -14,6 +14,7 @@ export const orders = pgTable("orders", {
     userPincode: varchar("user_pincode", { length: 10 }),
     jerseyName: varchar("jersey_name", { length: 32 }),
     jerseyNumber: varchar("jersey_number", { length: 8 }),
+    items: jsonb("items"),
 }); 
 
 export const clubApplications = pgTable("club_applications", {

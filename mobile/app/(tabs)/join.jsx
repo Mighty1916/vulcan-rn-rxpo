@@ -117,7 +117,6 @@ export default function JoinClubScreen() {
 
     const positions = [
     'Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Striker', 'Winger',
-    positions()
   ];
 
   return (

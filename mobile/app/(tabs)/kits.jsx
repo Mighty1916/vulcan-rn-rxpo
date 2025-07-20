@@ -1,4 +1,4 @@
-import React, { useState, } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -94,6 +94,7 @@ const PRODUCTS = [
   },
 ];
 
+
 export default function KitsScreen() {
   const [cart, setCart] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -115,6 +116,17 @@ export default function KitsScreen() {
   const [isPaying, setIsPaying] = useState(false);
   const [orders, setOrders] = useState([]); // [{id, date, items, total, status}]
   const { user } = useUser();
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch(`https://vulcan-rn-rxpo-3.onrender.com/api/orders/${user.id}`)
+      .then(res => res.json())
+      .then(data => setOrders(data))
+      .catch(err => {
+        // Optionally handle error
+        setOrders([]);
+      });
+  }, [user?.id]);
 
   // Filtered products based on filter state
   const filteredProducts = filter === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.type === filter);
@@ -164,12 +176,14 @@ export default function KitsScreen() {
 
   // Calculate cart total
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const safeCart = Array.isArray(cart) ? cart : [];
+    return safeCart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
   // Get total items in cart
   const getCartItemCount = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
+    const safeCart = Array.isArray(cart) ? cart : [];
+    return safeCart.reduce((total, item) => total + item.quantity, 0);
   };
 
   // Handle checkout
@@ -235,6 +249,7 @@ export default function KitsScreen() {
   const handleRazorpayClose = async (paymentData) => {
     setShowRazorpay(false);
     if (!paymentData) return;
+    const safeCart = Array.isArray(cart) ? cart : [];
     const verifyRes = await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/verify-razorpay-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -245,8 +260,8 @@ export default function KitsScreen() {
         userName: checkoutName,
         userPhone: checkoutPhone,
         userAddress: checkoutAddress,
-        productName: cart.map(item => item.name).join(', '),
-        quantity: cart.reduce((sum, item) => sum + item.quantity, 0),
+        productName: safeCart.map(item => item.name).join(', '),
+        quantity: safeCart.reduce((sum, item) => sum + item.quantity, 0),
         total: getCartTotal(),
         userPincode: checkoutPincode,
         jerseyName: checkoutJerseyName,
@@ -257,14 +272,14 @@ export default function KitsScreen() {
     if (verifyData.success) {
       // Save order details to /api/orders
       try {
+        const safeCart = Array.isArray(cart) ? cart : [];
         await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userEmail: checkoutEmail,
             userID: user?.id,
-            productName: cart.map(item => item.name).join(', '),
-            quantity: cart.reduce((sum, item) => sum + item.quantity, 0),
+            items: safeCart, // <-- send the full cart array!
             total: getCartTotal(),
             userName: checkoutName,
             userPhone: checkoutPhone,
@@ -468,9 +483,12 @@ export default function KitsScreen() {
                 </View>
                 <Text style={styles.orderDate}>{order.date}</Text>
                 <View style={styles.orderItems}>
-                  {order.items.map((item, idx) => (
-                    <Text key={idx} style={styles.orderItemText}>{item.name} (Size: {item.size}) x{item.quantity}</Text>
-                  ))}
+                  {(() => {
+                    const safeItems = Array.isArray(order.items) ? order.items : [];
+                    return safeItems.map((item, idx) => (
+                      <Text key={idx} style={styles.orderItemText}>{item.name} (Size: {item.size}) x{item.quantity}</Text>
+                    ));
+                  })()}
                 </View>
                 <View style={styles.orderFooter}>
                   <Text style={styles.orderTotal}>Total: ₹{order.total}</Text>
