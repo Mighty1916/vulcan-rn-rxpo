@@ -25,15 +25,26 @@ app.get("/api/orders", (req, res) => {
 // Create a new order only for testing 
 app.post("/api/orders", async (req, res) => {
   try {
-    const { userEmail, userID, productName, quantity, total } = req.body;
+    const { userEmail, userID, total, items, userName, userPhone, userAddress, userPincode, jerseyName, jerseyNumber } = req.body;
 
-    if (!userEmail || !productName || !quantity || !total || !userID ) {
+    if (!userEmail || !userID || !total || !items) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const newOrder = await db
       .insert(orders)
-      .values({ userEmail, productName, quantity, total, userID, userAddress })
+      .values({
+        userEmail,
+        userID,
+        total,
+        items, // <-- Save the full cart array as JSONB
+        userName,
+        userPhone,
+        userAddress,
+        userPincode,
+        jerseyName,
+        jerseyNumber,
+      })
       .returning();
 
     res.status(201).json(newOrder[0]);
