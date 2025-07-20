@@ -25,8 +25,9 @@ export const clubApplications = pgTable("club_applications", {
     dateOfBirth: varchar("date_of_birth", { length: 20 }).notNull(),
     position: varchar("position", { length: 50 }).notNull(),
     previousClubs: text("previous_clubs"),
-    submittedAt: timestamp("submitted_at").defaultNow()
-  });
+    submittedAt: timestamp("submitted_at").defaultNow(),
+    userID: text("user_id").notNull(),
+});
 
 export const friendlyBookings = pgTable("friendly_bookings", {
   id: serial("id").primaryKey(),
@@ -38,4 +39,5 @@ export const friendlyBookings = pgTable("friendly_bookings", {
   date: varchar("date", { length: 32 }).notNull(),
   time: varchar("time", { length: 32 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  userID: text("user_id").notNull(),
 });

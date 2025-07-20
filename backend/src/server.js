@@ -85,11 +85,11 @@ app.post("/api/apply", async (req, res) => {
   try {
     const {
       fullName, email, phone, address, dateOfBirth,
-      position, previousClubs,
+      position, previousClubs, userID
     } = req.body;
 
     // Simple field check
-    if (!fullName || !email || !phone || !address || !dateOfBirth || !position) {
+    if (!fullName || !email || !phone || !address || !dateOfBirth || !position || !userID) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -97,7 +97,7 @@ app.post("/api/apply", async (req, res) => {
       .insert(clubApplications)
       .values({
         fullName, email, phone, address, dateOfBirth,
-        position, previousClubs,
+        position, previousClubs, userID
       })
       .returning();
 
@@ -186,17 +186,45 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
 //friendly booking endpoint
 app.post("/api/friendly-booking", async (req, res) => {
   try {
-    const { name, phone, email, teamName, matchGround, date, time } = req.body;
-    if (!name || !phone || !email || !teamName || !matchGround || !date || !time) {
+    const { name, phone, email, teamName, matchGround, date, time, userID } = req.body;
+    if (!name || !phone || !email || !teamName || !matchGround || !date || !time || !userID) {
       return res.status(400).json({ error: "Missing required fields" });
     }
     const newBooking = await db
       .insert(friendlyBookings)
-      .values({ name, phone, email, teamName, matchGround, date, time })
+      .values({ name, phone, email, teamName, matchGround, date, time, userID })
       .returning();
     res.status(201).json({ success: true, booking: newBooking[0] });
   } catch (error) {
     console.error("Error saving booking:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Get friendly bookings by userID
+app.get("/api/friendly-booking/:userID", async (req, res) => {
+  try {
+    const { userID } = req.params;
+    const bookings = await db
+      .select()
+      .from(friendlyBookings)
+      .where(eq(friendlyBookings.userID, userID));
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+// Get club applications by userID
+app.get("/api/apply/:userID", async (req, res) => {
+  try {
+    const { userID } = req.params;
+    const applications = await db
+      .select()
+      .from(clubApplications)
+      .where(eq(clubApplications.userID, userID));
+    res.status(200).json(applications);
+  } catch (error) {
     res.status(500).json({ error: "Something went wrong" });
   }
 });

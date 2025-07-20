@@ -13,12 +13,14 @@ import {
   TextInput,
   ActivityIndicator,
   Animated,
+  Share,
+  Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Users, Trophy, TrendingUp, User, Settings, Bell, X, Calendar } from 'lucide-react-native';
+import { Users, Trophy, TrendingUp, User, UserCircle, LogOut, Lock, Share2, HelpCircle, Star, FileText, Trash2, Bell, X, Calendar, Instagram } from 'lucide-react-native';
 import { styles } from "../../assets/styles/home.styles"
 import { COLORS } from '../../constants/colors';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useUser, useClerk } from '@clerk/clerk-expo';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -49,38 +51,17 @@ const slideshowData = [
 
 export default function HomeScreen() {
   const { signOut } = useAuth();
+  const { user } = useUser();
+  const { deleteUser } = useClerk();
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef(null);
   const [showBookFriendlyModal, setShowBookFriendlyModal] = useState(false);
   const [showTournamentsModal, setShowTournamentsModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [showSquadModal, setShowSquadModal] = useState(false);
+  const [showPlayersModal, setShowPlayersModal] = useState(false);
+  const [showTrophiesModal, setShowTrophiesModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
-  // Squad Data
-  const squadData = useCallback(() => ({
-    'Under 19': [
-      { id: 1, name: 'Ahmed Khan', position: 'Forward', number: 10, age: 18 },
-      { id: 2, name: 'Rahul Singh', position: 'Midfielder', number: 8, age: 17 },
-      { id: 3, name: 'Vikram Patel', position: 'Defender', number: 4, age: 18 },
-      { id: 4, name: 'Arjun Sharma', position: 'Goalkeeper', number: 1, age: 17 },
-      { id: 5, name: 'Karan Malhotra', position: 'Forward', number: 9, age: 18 },
-    ],
-    'Under 22': [
-      { id: 6, name: 'Priyansh Gupta', position: 'Midfielder', number: 6, age: 21 },
-      { id: 7, name: 'Aditya Verma', position: 'Defender', number: 3, age: 20 },
-      { id: 8, name: 'Rishabh Kumar', position: 'Forward', number: 11, age: 21 },
-      { id: 9, name: 'Surya Prakash', position: 'Goalkeeper', number: 12, age: 20 },
-      { id: 10, name: 'Dhruv Mehta', position: 'Midfielder', number: 7, age: 21 },
-    ],
-    'Senior Team': [
-      { id: 11, name: 'Rohan Sharma', position: 'Forward', number: 10, age: 25 },
-      { id: 12, name: 'Amit Kumar', position: 'Midfielder', number: 8, age: 26 },
-      { id: 13, name: 'Vikrant Singh', position: 'Defender', number: 5, age: 24 },
-      { id: 14, name: 'Kartik Patel', position: 'Goalkeeper', number: 1, age: 27 },
-      { id: 15, name: 'Arnav Gupta', position: 'Forward', number: 9, age: 25 },
-    ]
-  }), []);
-
   // Book Friendly Modal States
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
@@ -287,6 +268,7 @@ export default function HomeScreen() {
           matchGround: checkoutMatchGround,
           date: selectedDate?.toLocaleDateString(),
           time: selectedTimeSlot,
+          userID: user.id,
         })
       });
       const data = await response.json();
@@ -341,6 +323,208 @@ export default function HomeScreen() {
     const slideIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
     setCurrentSlide(slideIndex);
   };
+
+  // Helper to get only the word part of the email (before @, no numbers)
+  function getEmailWord(user) {
+    const email = user?.emailAddresses?.[0]?.emailAddress;
+    if (!email) return 'Welcome!';
+    let namePart = email.split('@')[0];
+    namePart = namePart.replace(/[0-9]/g, '');
+    return namePart;
+  }
+
+  // Add mock tournaments data and state for selected tournament
+  const [selectedTournament, setSelectedTournament] = useState(null);
+  const tournaments = [
+    {
+      id: 1,
+      name: 'UFA 22',
+      year: 2022,
+      type: 'League + Knockout',
+      matches: [
+        {
+          date: '2022-04-10',
+          type: 'League',
+          opponent: 'Team Alpha',
+          score: '3-1',
+          result: 'Win',
+          bestPerformance: 'A. Khan (2 goals)'
+        },
+        {
+          date: '2022-04-15',
+          type: 'League',
+          opponent: 'Team Beta',
+          score: '1-1',
+          result: 'Draw',
+          bestPerformance: 'R. Singh (1 assist)'
+        },
+        {
+          date: '2022-04-20',
+          type: 'Knockout',
+          opponent: 'Team Gamma',
+          score: '2-0',
+          result: 'Win',
+          bestPerformance: 'V. Patel (Clean Sheet)'
+        }
+      ]
+    },
+    {
+      id: 2,
+      name: 'Vulcan Heat Cup',
+      year: 2023,
+      type: 'Knockout',
+      matches: [
+        {
+          date: '2023-05-05',
+          type: 'Quarterfinal',
+          opponent: 'Team Delta',
+          score: '2-1',
+          result: 'Win',
+          bestPerformance: 'K. Malhotra (Winning Goal)'
+        },
+        {
+          date: '2023-05-10',
+          type: 'Semifinal',
+          opponent: 'Team Epsilon',
+          score: '0-1',
+          result: 'Loss',
+          bestPerformance: 'A. Sharma (7 saves)'
+        }
+      ]
+    },
+    {
+      id: 3,
+      name: 'Summer League',
+      year: 2023,
+      type: 'League',
+      matches: [
+        {
+          date: '2023-06-01',
+          type: 'League',
+          opponent: 'Team Zeta',
+          score: '4-2',
+          result: 'Win',
+          bestPerformance: 'P. Gupta (Hat-trick)'
+        },
+        {
+          date: '2023-06-07',
+          type: 'League',
+          opponent: 'Team Eta',
+          score: '2-2',
+          result: 'Draw',
+          bestPerformance: 'A. Verma (Late Equalizer)'
+        }
+      ]
+    }
+  ];
+
+  // Add filter state
+  const [tournamentFilter, setTournamentFilter] = useState('All');
+  const types = ['All', ...Array.from(new Set(tournaments.map(t => t.type)))];
+
+  // Helper: filter tournaments
+  const filteredTournaments = tournaments.filter(t =>
+    (tournamentFilter === 'All' || t.type === tournamentFilter)
+  );
+
+  // Helper: get tournament stats
+  function getTournamentStats(t) {
+    const total = t.matches.length;
+    const wins = t.matches.filter(m => m.result === 'Win').length;
+    const draws = t.matches.filter(m => m.result === 'Draw').length;
+    const losses = t.matches.filter(m => m.result === 'Loss').length;
+    let goals = 0;
+    t.matches.forEach(m => {
+      const matchGoals = parseInt(m.score.split('-')[0], 10);
+      if (!isNaN(matchGoals)) goals += matchGoals;
+    });
+    // Best player (mock: most mentioned in bestPerformance)
+    const perfCount = {};
+    t.matches.forEach(m => {
+      const match = m.bestPerformance;
+      if (match) {
+        const name = match.split('(')[0].trim();
+        perfCount[name] = (perfCount[name] || 0) + 1;
+      }
+    });
+    const bestPlayer = Object.entries(perfCount).sort((a,b) => b[1]-a[1])[0]?.[0] || '-';
+    return { total, wins, draws, losses, goals, bestPlayer };
+  }
+
+  // Mock player data grouped by division
+  const playersByDivision = [
+    {
+      group: 'I st Division (Under 22)',
+      players: [
+        { id: 1, name: 'Ahmed Khan', position: 'Forward', number: 10, age: 20, ability: 'Dribbling, Finishing' },
+        { id: 2, name: 'Rahul Singh', position: 'Midfielder', number: 8, age: 21, ability: 'Passing, Vision' },
+        { id: 3, name: 'Vikram Patel', position: 'Defender', number: 4, age: 19, ability: 'Tackling, Marking' },
+        { id: 4, name: 'Arjun Sharma', position: 'Goalkeeper', number: 1, age: 22, ability: 'Reflexes, Shot Stopping' },
+        { id: 5, name: 'Karan Malhotra', position: 'Forward', number: 9, age: 20, ability: 'Pace, Finishing' },
+      ]
+    },
+    {
+      group: 'II nd Division (U15)',
+      players: [
+        { id: 6, name: 'Priyansh Gupta', position: 'Midfielder', number: 6, age: 15 },
+        { id: 7, name: 'Aditya Verma', position: 'Defender', number: 3, age: 14 },
+        { id: 8, name: 'Rishabh Kumar', position: 'Forward', number: 11, age: 15 },
+        { id: 9, name: 'Surya Prakash', position: 'Goalkeeper', number: 12, age: 15 },
+        { id: 10, name: 'Dhruv Mehta', position: 'Midfielder', number: 7, age: 14 },
+      ]
+    }
+  ];
+
+  const trophies = [
+    {
+      id: 1,
+      title: 'U19 Allama',
+      description: 'Winners of the Allama Iqbal U19 Cup',
+      year: 2022,
+    },
+    {
+      id: 2,
+      title: 'UFA Runner Up',
+      description: 'Runner Up in the UFA Championship',
+      year: 2023,
+    },
+    {
+      id: 3,
+      title: 'UFA U22',
+      description: 'Champions of the UFA Under 22 League',
+      year: 2023,
+    },
+  ];
+
+  // Add state for alerts/notifications
+  const [showAlertsModal, setShowAlertsModal] = useState(false);
+  const [alerts, setAlerts] = useState([
+    {
+      id: 1,
+      type: 'order',
+      icon: 'ShoppingCart',
+      message: 'Your order has been placed!',
+      time: '2 hours ago',
+      read: false,
+    },
+    {
+      id: 2,
+      type: 'shipping',
+      icon: 'Truck',
+      message: 'Your order has been shipped.',
+      time: '1 hour ago',
+      read: false,
+    },
+    {
+      id: 3,
+      type: 'match',
+      icon: 'Calendar',
+      message: 'Your friendly match booking is confirmed!',
+      time: 'just now',
+      read: false,
+    },
+  ]);
+  const unreadAlerts = alerts.filter(a => !a.read).length;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -401,7 +585,9 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.welcomeSection}>
             <Text style={styles.welcomeText}>Welcome back!</Text>
-            <Text style={styles.clubName}>Vulcan Heat FC</Text>
+            <Text style={styles.clubName}>
+              {user?.fullName || getEmailWord(user) || 'Welcome!'}
+            </Text>
           </View>
           <TouchableOpacity style={styles.profileButton}>
             <View style={styles.profileIcon}>
@@ -424,7 +610,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.statCard}>
             <Users size={20} color={COLORS.primary} />
-            <Text style={styles.statNumber}>20</Text>
+            <Text style={styles.statNumber}>14</Text>
             <Text style={styles.statLabel}>Players</Text>
           </View>
         </View>
@@ -438,35 +624,29 @@ export default function HomeScreen() {
             contentContainerStyle={styles.actionsScrollContainer}
             style={styles.actionsScrollView}
           >
-            <TouchableOpacity style={styles.actionButton} onPress={() => setShowSquadModal(true)}>
-              <Users size={24} color={COLORS.primary} />
-              <Text style={styles.actionText}>Squad</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => setShowPlayersModal(true)}>
               <User size={24} color={COLORS.primary} />
               <Text style={styles.actionText}>Players</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => setShowTrophiesModal(true)}>
               <Trophy size={24} color={COLORS.primary} />
               <Text style={styles.actionText}>Trophies</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => {
+              setShowAlertsModal(true);
+              setAlerts(alerts => alerts.map(a => ({ ...a, read: true })));
+            }}>
               <Bell size={24} color={COLORS.primary} />
+              {unreadAlerts > 0 && (
+                <View style={styles.alertBadge}>
+                  <Text style={styles.alertBadgeText}>{unreadAlerts}</Text>
+                </View>
+              )}
               <Text style={styles.actionText}>Alerts</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-            onPress={
-                async () => {
-                  try {
-                    await signOut();
-                  } catch (error) {
-                    console.error("Logout failed:", error);
-                  }
-                }
-              }
-            style={styles.actionButton}>
-              <Settings size={24} color={COLORS.primary} />
-              <Text style={styles.actionText}>Settings</Text>
+            <TouchableOpacity style={styles.actionButton} onPress={() => setShowProfileModal(true)}>
+              <UserCircle size={24} color={COLORS.primary} />
+              <Text style={styles.actionText}>Profile</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -570,7 +750,6 @@ export default function HomeScreen() {
                 <X size={20} color={COLORS.text} />
               </TouchableOpacity>
             </View>
-            
             <ScrollView 
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
@@ -729,7 +908,6 @@ export default function HomeScreen() {
                 <X size={20} color={COLORS.text} />
               </TouchableOpacity>
             </View>
-            
             <ScrollView 
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
@@ -845,53 +1023,245 @@ export default function HomeScreen() {
         visible={showTournamentsModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowTournamentsModal(false)}
+        onRequestClose={() => {
+          setShowTournamentsModal(false);
+          setSelectedTournament(null);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { width: '100%' }]}> 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={styles.modalTitle}>Tournaments</Text>
-              <TouchableOpacity onPress={() => setShowTournamentsModal(false)}>
-                <X size={24} color={COLORS.text} />
+            {/* Modal Header */}
+            <View style={styles.modalHeaderContainer}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={styles.modalHeaderIcon}>
+                  <Trophy size={20} color={COLORS.white} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>{selectedTournament ? selectedTournament.name + ' ' + selectedTournament.year : 'Tournaments'}</Text>
+                  <Text style={styles.modalSubtitle}>{selectedTournament ? selectedTournament.type : 'All tournaments played so far'}</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.modalCloseButtonEnhanced}
+                onPress={() => {
+                  if (selectedTournament) setSelectedTournament(null);
+                  else setShowTournamentsModal(false);
+                }}
+              >
+                <X size={20} color={COLORS.text} />
               </TouchableOpacity>
             </View>
-            {/* Modal Content */}
-            <Text style={styles.modalLabel}>Coming soon: View and join upcoming tournaments!</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={() => setShowTournamentsModal(false)}>
-              <Text style={styles.modalButtonText}>Close</Text>
-            </TouchableOpacity>
+            {/* Filter Bar (only on list view) */}
+            {!selectedTournament && (
+              <ScrollView
+                style={{ marginBottom: 18 }}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tournamentFilterBar}
+              >
+                {types.map(type => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[styles.tournamentFilterButton, tournamentFilter === type && styles.tournamentFilterButtonActive]}
+                    onPress={() => setTournamentFilter(type)}
+                  >
+                    <Text style={[styles.tournamentFilterText, tournamentFilter === type && styles.tournamentFilterTextActive]}>{type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            {/* Tournament List or Details */}
+            {!selectedTournament ? (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {filteredTournaments.map(t => (
+                  <TouchableOpacity
+                    key={t.id}
+                    style={styles.tournamentCard}
+                    onPress={() => setSelectedTournament(t)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.tournamentCardHeader}>
+                      <View style={styles.tournamentCardIcon}><Trophy size={20} color={COLORS.primary} /></View>
+                      <Text style={styles.tournamentCardName}>{t.name}</Text>
+                      <View style={[styles.tournamentTypeBadge, t.type.includes('Knockout') && { backgroundColor: '#E67E22' }, t.type.includes('League') && { backgroundColor: '#2980B9' }]}>
+                        <Text style={styles.tournamentTypeBadgeText}>{t.type}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.tournamentCardFooter}>
+                      <Text style={styles.tournamentCardYear}>{t.year}</Text>
+                      <View style={styles.tournamentMatchCountBadge}>
+                        <Text style={styles.tournamentMatchCountText}>{t.matches.length} Matches</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Tournament Stats */}
+                <View style={styles.tournamentStatsContainer}>
+                  {(() => { const s = getTournamentStats(selectedTournament); return (
+                    <>
+                      <View style={styles.tournamentStatBox}><Text style={styles.tournamentStatLabel}>Matches</Text><Text style={styles.tournamentStatValue}>{s.total}</Text></View>
+                      <View style={styles.tournamentStatBox}><Text style={styles.tournamentStatLabel}>Wins</Text><Text style={[styles.tournamentStatValue, { color: '#27AE60' }]}>{s.wins}</Text></View>
+                      <View style={styles.tournamentStatBox}><Text style={styles.tournamentStatLabel}>Draws</Text><Text style={[styles.tournamentStatValue, { color: COLORS.textLight }]}>{s.draws}</Text></View>
+                      <View style={styles.tournamentStatBox}><Text style={styles.tournamentStatLabel}>Losses</Text><Text style={[styles.tournamentStatValue, { color: '#E74C3C' }]}>{s.losses}</Text></View>
+                      <View style={styles.tournamentStatBox}><Text style={styles.tournamentStatLabel}>Goals</Text><Text style={styles.tournamentStatValue}>{s.goals}</Text></View>
+                      <View style={styles.tournamentStatBox}><Text style={styles.tournamentStatLabel}>Best Player</Text><Text style={styles.tournamentStatValue}>{s.bestPlayer}</Text></View>
+                    </>); })()}
+                </View>
+                {/* Matches List */}
+                {selectedTournament.matches.map((m, idx) => (
+                  <View key={idx} style={styles.tournamentMatchCard}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={styles.tournamentMatchDate}>{m.date} • {m.type}</Text>
+                      <Text style={[styles.tournamentMatchResult, m.result === 'Win' ? { color: '#27AE60' } : m.result === 'Loss' ? { color: '#E74C3C' } : { color: COLORS.textLight }]}>{m.result}</Text>
+                    </View>
+                    <Text style={styles.tournamentMatchOpponent}>vs {m.opponent}</Text>
+                    <Text style={styles.tournamentMatchScore}>Score: {m.score}</Text>
+                    <Text style={styles.tournamentMatchPerformance}>Best: {m.bestPerformance}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
 
-      {/* Squad Modal */}
+      {/* Players Modal */}
       <Modal
-        visible={showSquadModal}
+        visible={showPlayersModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowSquadModal(false)}
+        onRequestClose={() => setShowPlayersModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { width: '100%' }]}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={styles.modalTitle}>Squad</Text>
-              <TouchableOpacity onPress={() => setShowSquadModal(false)}>
-                <X size={24} color={COLORS.text} />
+          <View style={[styles.modalContent, { width: '100%' }]}> 
+            <View style={styles.modalHeaderContainer}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={styles.modalHeaderIcon}>
+                  <User size={20} color={COLORS.white} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>Players</Text>
+                  <Text style={styles.modalSubtitle}>Meet our teams by division</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.modalCloseButtonEnhanced}
+                onPress={() => setShowPlayersModal(false)}
+              >
+                <X size={20} color={COLORS.text} />
               </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
-              {Object.entries(squadData()).map(([category, players]) => (
-                <View key={category} style={styles.squadCategory}>
-                  <Text style={styles.squadCategoryTitle}>{category}</Text>
-                  {players.map((player) => (
-                    <View key={player.id} style={styles.squadPlayer}>
-                      <Text style={styles.squadPlayerName}>{player.name}</Text>
-                      <Text style={styles.squadPlayerInfo}>
-                        {player.position} - #{player.number}
-                      </Text>
-                      <Text style={styles.squadPlayerInfo}>Age: {player.age}</Text>
+              {playersByDivision.map(group => (
+                <View key={group.group} style={styles.squadCategory}>
+                  <Text style={styles.squadCategoryTitle}>{group.group}</Text>
+                  {group.players.map(player => (
+                    <View key={player.id} style={styles.playerCard}>
+                      <View style={styles.playerAvatar}>
+                        <Text style={styles.playerAvatarText}>{player.name.split(' ').map(n => n[0]).join('').toUpperCase()}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.playerName}>{player.name}</Text>
+                        {player.ability && (
+                          <Text style={styles.playerAbility}>{player.ability}</Text>
+                        )}
+                        <Text style={styles.playerInfo}>{player.position} • #{player.number} • Age: {player.age}</Text>
+                      </View>
                     </View>
                   ))}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Trophies Modal */}
+      <Modal
+        visible={showTrophiesModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowTrophiesModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { width: '100%' }]}> 
+            <View style={styles.modalHeaderContainer}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={styles.modalHeaderIcon}>
+                  <Trophy size={20} color={COLORS.white} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>Trophies</Text>
+                  <Text style={styles.modalSubtitle}>Our proudest achievements</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.modalCloseButtonEnhanced}
+                onPress={() => setShowTrophiesModal(false)}
+              >
+                <X size={20} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {trophies.map(trophy => (
+                <View key={trophy.id} style={styles.trophyCard}>
+                  <View style={styles.trophyCardIcon}><Trophy size={28} color={COLORS.primary} /></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.trophyCardTitle}>{trophy.title}</Text>
+                    <Text style={styles.trophyCardDesc}>{trophy.description}</Text>
+                    <Text style={styles.trophyCardYear}>{trophy.year}</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Alerts Modal */}
+      <Modal
+        visible={showAlertsModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAlertsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { width: '100%' }]}> 
+            <View style={styles.modalHeaderContainer}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={styles.modalHeaderIcon}>
+                  <Bell size={20} color={COLORS.white} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>Alerts</Text>
+                  <Text style={styles.modalSubtitle}>Your latest notifications</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.modalCloseButtonEnhanced}
+                onPress={() => setShowAlertsModal(false)}
+              >
+                <X size={20} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {alerts.length === 0 && (
+                <Text style={{ color: COLORS.textLight, textAlign: 'center', marginTop: 40 }}>No alerts yet.</Text>
+              )}
+              {alerts.map(alert => (
+                <View key={alert.id} style={[styles.alertCard, !alert.read && styles.alertCardUnread]}>
+                  <View style={styles.alertCardIcon}>
+                    {alert.icon === 'ShoppingCart' && <Bell size={20} color={COLORS.primary} />}
+                    {alert.icon === 'Truck' && <Bell size={20} color={COLORS.primary} />}
+                    {alert.icon === 'Calendar' && <Calendar size={20} color={COLORS.primary} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.alertCardMessage}>{alert.message}</Text>
+                    <Text style={styles.alertCardTime}>{alert.time}</Text>
+                  </View>
                 </View>
               ))}
             </ScrollView>
@@ -925,6 +1295,103 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
       )}
+
+      {/* Profile Modal */}
+      <Modal
+        visible={showProfileModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowProfileModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { width: '100%' }]}> 
+            <View style={styles.modalHeaderContainer}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={styles.modalHeaderIcon}>
+                  <UserCircle size={20} color={COLORS.white} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>Profile</Text>
+                  <Text style={styles.modalSubtitle}>Manage your account</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.modalCloseButtonEnhanced}
+                onPress={() => setShowProfileModal(false)}
+              >
+                <X size={20} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.profileUserBox}>
+              <UserCircle size={48} color={COLORS.primary} style={{ marginBottom: 8 }} />
+              <Text style={styles.profileUserName}>{user?.fullName || getEmailWord(user) || 'User'}</Text>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.profileList} contentContainerStyle={{ paddingBottom: 24 }}>
+              <TouchableOpacity style={styles.profileListItem} onPress={() => {
+                // Clerk password reset: open Clerk's reset page
+                Linking.openURL('https://clerk.dev/reset-password');
+              }}>
+                <Lock size={20} color={COLORS.primary} style={styles.profileListIcon} />
+                <Text style={styles.profileListText}>Change Password</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileListItem} onPress={async () => {
+                try {
+                  await Share.share({
+                    message: 'Check out Vulcan Heat FC! https://www.instagram.com/vulcanheatfc/',
+                  });
+                } catch (_) {}
+              }}>
+                <Share2 size={20} color={COLORS.primary} style={styles.profileListIcon} />
+                <Text style={styles.profileListText}>Share this App</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileListItem} onPress={() => {
+                Linking.openURL('https://www.instagram.com/vulcanheatfc/');
+              }}>
+                <HelpCircle size={20} color={COLORS.primary} style={styles.profileListIcon} />
+                <Text style={styles.profileListText}>Help & Support</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileListItem} onPress={() => {}}>
+                <Star size={20} color={COLORS.primary} style={styles.profileListIcon} />
+                <Text style={styles.profileListText}>Rate Us</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileListItem} onPress={() => {}}>
+                <FileText size={20} color={COLORS.primary} style={styles.profileListIcon} />
+                <Text style={styles.profileListText}>Terms & Conditions</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileListItem} onPress={() => {
+                Alert.alert(
+                  'Delete Account',
+                  'Are you sure you want to delete your account? This action cannot be undone.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Delete', style: 'destructive', onPress: async () => {
+                      try {
+                        await deleteUser();
+                        await signOut();
+                      } catch (_) {
+                        Alert.alert('Error', 'Failed to delete account.');
+                      }
+                    }},
+                  ]
+                );
+              }}>
+                <Trash2 size={20} color={COLORS.primary} style={styles.profileListIcon} />
+                <Text style={[styles.profileListText, { color: '#E74C3C' }]}>Delete Account</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileListItem} onPress={async () => { try { await signOut(); } catch (_) {}}}>
+                <LogOut size={20} color={COLORS.primary} style={styles.profileListIcon} />
+                <Text style={styles.profileListText}>Logout</Text>
+              </TouchableOpacity>
+            </ScrollView>
+            {/* Social icons */}
+            <View style={styles.profileSocialRow}>
+              <TouchableOpacity onPress={() => Linking.openURL('https://www.instagram.com/vulcanheatfc/')} style={styles.profileSocialIcon}>
+                <Instagram size={28} color={'#E1306C'} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

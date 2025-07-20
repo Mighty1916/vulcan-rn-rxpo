@@ -35,6 +35,8 @@ export default function SignUpScreen() {
       await signUp.create({
         emailAddress: email,
         password,
+        firstName,
+        lastName,
       });
 
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });

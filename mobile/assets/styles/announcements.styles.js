@@ -1,3 +1,4 @@
+import { LucideChevronLeftCircle } from "lucide-react-native";
 import { COLORS } from "../../constants/colors";
 import { StyleSheet, } from 'react-native';
 
@@ -40,8 +41,9 @@ export const styles = StyleSheet.create({
     
     // Secret Section Styles
     secretSection: {
-      marginHorizontal: 20,
+      marginHorizontal: 30,
       marginBottom: 20,
+      marginTop: 20,
       backgroundColor: COLORS.card,
       borderRadius: 12,
       padding: 16,
@@ -88,13 +90,15 @@ export const styles = StyleSheet.create({
     // Announcements Styles
     announcementsContainer: {
       paddingHorizontal: 20,
-      paddingBottom: 20,
+      paddingBottom: 10,
     },
     sectionTitle: {
       fontSize: 20,
       fontWeight: 'bold',
       color: COLORS.text,
-      marginBottom: 16,
+      marginBottom: 30,
+      marginTop:20,
+      alignContent: 'center'
     },
     announcementCard: {
       backgroundColor: COLORS.card,

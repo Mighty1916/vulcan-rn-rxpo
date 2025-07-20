@@ -74,6 +74,17 @@ const coffeeTheme = {
     card: "#FFFFFF",
     shadow: "#000000",
   };
+
+  const vulcan = {
+    primary: "black",
+    background: "white",
+    text: "black",
+    border: "red",
+    white: "#FFFFFF",
+    textLight: "#7F8C8D",
+    card: "#FFFFFF",
+    shadow: "#000000",
+  };
   
   const roseGoldTheme = {
     primary: "#E0BFB8",
@@ -95,6 +106,7 @@ const coffeeTheme = {
     mint: mintTheme,
     midnight: midnightTheme,
     roseGold: roseGoldTheme,
+    vulcan: vulcan,
   };
   
   // 👇 change this to switch theme

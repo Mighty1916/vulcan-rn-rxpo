@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { UserPlus, User, Mail, Phone, MapPin, Calendar, Trophy, Send } from 'lucide-react-native';
 import { styles } from "../../assets/styles/join.styles"
+import { useUser } from '@clerk/clerk-expo';
 
 const COLORS = {
   primary: "#2C3E50",
@@ -39,6 +40,7 @@ export default function JoinClubScreen() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useUser();
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -83,7 +85,10 @@ export default function JoinClubScreen() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          userID: user?.id,
+        }),
       });
     
       const result = await response.json();
@@ -111,7 +116,8 @@ export default function JoinClubScreen() {
   };
 
     const positions = [
-    'Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Striker', 'Winger'
+    'Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Striker', 'Winger',
+    positions()
   ];
 
   return (

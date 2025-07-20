@@ -23,6 +23,7 @@ import {
 } from 'lucide-react-native';
 import { styles } from '../../assets/styles/kits.styles';
 import RazorpayCheckout from '../screens/RazorpayCheckout'; // import the component
+import { useUser } from '@clerk/clerk-expo';
 
 const COLORS = {
   primary: "#2C3E50",
@@ -113,6 +114,7 @@ export default function KitsScreen() {
   const [checkoutPincode, setCheckoutPincode] = useState('');
   const [isPaying, setIsPaying] = useState(false);
   const [orders, setOrders] = useState([]); // [{id, date, items, total, status}]
+  const { user } = useUser();
 
   // Filtered products based on filter state
   const filteredProducts = filter === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.type === filter);
@@ -239,7 +241,7 @@ export default function KitsScreen() {
       body: JSON.stringify({
         ...paymentData,
         userEmail: checkoutEmail,
-        userID: '',
+        userID: user?.id,
         userName: checkoutName,
         userPhone: checkoutPhone,
         userAddress: checkoutAddress,
@@ -260,7 +262,7 @@ export default function KitsScreen() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userEmail: checkoutEmail,
-            userID: '',
+            userID: user?.id,
             productName: cart.map(item => item.name).join(', '),
             quantity: cart.reduce((sum, item) => sum + item.quantity, 0),
             total: getCartTotal(),
