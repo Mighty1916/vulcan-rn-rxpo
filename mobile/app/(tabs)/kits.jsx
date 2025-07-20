@@ -245,11 +245,37 @@ export default function KitsScreen() {
         userAddress: checkoutAddress,
         productName: cart.map(item => item.name).join(', '),
         quantity: cart.reduce((sum, item) => sum + item.quantity, 0),
-        total: getCartTotal()
+        total: getCartTotal(),
+        userPincode: checkoutPincode,
+        jerseyName: checkoutJerseyName,
+        jerseyNumber: checkoutJerseyNumber,
       })
     });
     const verifyData = await verifyRes.json();
     if (verifyData.success) {
+      // Save order details to /api/orders
+      try {
+        await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userEmail: checkoutEmail,
+            userID: '',
+            productName: cart.map(item => item.name).join(', '),
+            quantity: cart.reduce((sum, item) => sum + item.quantity, 0),
+            total: getCartTotal(),
+            userName: checkoutName,
+            userPhone: checkoutPhone,
+            userAddress: checkoutAddress,
+            userPincode: checkoutPincode,
+            jerseyName: checkoutJerseyName,
+            jerseyNumber: checkoutJerseyNumber,
+          })
+        });
+      } catch (e) {
+        // Optionally handle error
+        console.error('Error saving order to DB:', e);
+      }
       Alert.alert('Payment Success', 'Your order has been placed!');
       setOrders(prev => [
         {

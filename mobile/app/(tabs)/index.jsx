@@ -247,7 +247,7 @@ export default function HomeScreen() {
     });
   };
 
-  const handleBookNow = () => {
+  const handleBookNow = async () => {
     if (!checkoutName.trim()) {
       Alert.alert('Missing Name', 'Please enter your name.');
       return;
@@ -274,19 +274,33 @@ export default function HomeScreen() {
     }
 
     setIsBooking(true);
-    
-    // Simulate booking process
-    setTimeout(() => {
+    try {
+      // Send booking info to backend
+      const response = await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/friendly-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: checkoutName,
+          phone: checkoutPhone,
+          email: checkoutEmail,
+          teamName: checkoutTeamName,
+          matchGround: checkoutMatchGround,
+          date: selectedDate?.toLocaleDateString(),
+          time: selectedTimeSlot,
+        })
+      });
+      const data = await response.json();
       setIsBooking(false);
       setShowCheckoutModal(false);
-      
+      if (!data.success) {
+        Alert.alert('Booking Failed', data.error || 'Could not save booking.');
+        return;
+      }
       // Show celebration animation
       setShowCelebration(true);
-      
       // Hide celebration after 3 seconds
       setTimeout(() => {
         setShowCelebration(false);
-        
         // Reset all form data
         setSelectedDate(null);
         setSelectedTimeSlot(null);
@@ -295,14 +309,17 @@ export default function HomeScreen() {
         setCheckoutTeamName('');
         setCheckoutMatchGround('');
         setCheckoutEmail('');
-        
         Alert.alert(
           'Booking Submitted',
           'We will check our availability and get back to you soon!',
           [{ text: 'OK' }]
         );
       }, 3000);
-    }, 2000);
+    } catch (error) {
+      setIsBooking(false);
+      console.error(error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
   };
 
   useEffect(() => {

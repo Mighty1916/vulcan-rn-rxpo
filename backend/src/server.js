@@ -85,7 +85,7 @@ app.post("/api/apply", async (req, res) => {
   try {
     const {
       fullName, email, phone, address, dateOfBirth,
-      position, experience, previousClubs, emergencyContact, emergencyPhone
+      position, previousClubs,
     } = req.body;
 
     // Simple field check
@@ -97,7 +97,7 @@ app.post("/api/apply", async (req, res) => {
       .insert(clubApplications)
       .values({
         fullName, email, phone, address, dateOfBirth,
-        position, experience, previousClubs, emergencyContact, emergencyPhone
+        position, previousClubs,
       })
       .returning();
 
@@ -183,7 +183,7 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
   }
 });
 
-//friendlt booking endpoint
+//friendly booking endpoint
 app.post("/api/friendly-booking", async (req, res) => {
   try {
     const { name, phone, email, teamName, matchGround, date, time } = req.body;

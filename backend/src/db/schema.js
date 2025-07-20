@@ -24,10 +24,7 @@ export const clubApplications = pgTable("club_applications", {
     address: text("address").notNull(),
     dateOfBirth: varchar("date_of_birth", { length: 20 }).notNull(),
     position: varchar("position", { length: 50 }).notNull(),
-    //experience: text("experience"),
     previousClubs: text("previous_clubs"),
-    //emergencyContact: varchar("emergency_contact", { length: 255 }),
-    //emergencyPhone: varchar("emergency_phone", { length: 20 }),
     submittedAt: timestamp("submitted_at").defaultNow()
   });
 
