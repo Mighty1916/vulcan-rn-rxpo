@@ -160,9 +160,8 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
       razorpay_signature,
       userEmail,
       userID,
-      productName,
-      quantity,
       total,
+      items,
       userName,
       userPhone,
       userAddress,
@@ -184,7 +183,18 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
     // 2. Save order to DB
     const newOrder = await db
       .insert(orders)
-      .values({ userEmail, productName, quantity, total, userID, userName, userPhone, userAddress, userPincode, jerseyName, jerseyNumber })
+      .values({
+        userEmail,
+        userID,
+        total,
+        items, // <-- Save the full cart array as JSONB
+        userName,
+        userPhone,
+        userAddress,
+        userPincode,
+        jerseyName,
+        jerseyNumber,
+      })
       .returning();
 
     res.status(201).json({ success: true, order: newOrder[0] });
