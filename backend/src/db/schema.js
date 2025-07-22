@@ -42,4 +42,5 @@ export const friendlyBookings = pgTable("friendly_bookings", {
   time: varchar("time", { length: 32 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   userID: text("user_id").notNull(),
+  status: varchar("status", { length: 32 }).default('Booked'),
 });

@@ -1,0 +1,1 @@
+ALTER TABLE "friendly_bookings" ADD COLUMN "status" varchar(32) DEFAULT 'Booked';

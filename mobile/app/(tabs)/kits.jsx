@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Modal,
   Alert,
   FlatList,
-  TextInput, // <-- add this
+  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { 
@@ -22,7 +22,7 @@ import {
   ArrowRight
 } from 'lucide-react-native';
 import { styles } from '../../assets/styles/kits.styles';
-import RazorpayCheckout from '../screens/RazorpayCheckout'; // import the component
+import RazorpayCheckout from '../screens/RazorpayCheckout';
 import { useUser } from '@clerk/clerk-expo';
 
 const COLORS = {
@@ -38,7 +38,6 @@ const COLORS = {
   warning: "#F39C12"
 };
 
-// Sample product data
 const PRODUCTS = [
   {
     id: 1,
@@ -51,7 +50,7 @@ const PRODUCTS = [
     reviews: 156,
     description: 'Official home jersey for the 2025 season. Made with premium moisture-wicking fabric.',
     inStock: true,
-    type: 'Jersey', // <-- add type
+    type: 'Jersey',
   },
   {
     id: 2,
@@ -63,8 +62,8 @@ const PRODUCTS = [
     rating: 4.7,
     reviews: 142,
     description: 'Official away jersey for the 2024 season. Lightweight and comfortable.',
-    inStock: false,
-    type: 'Jersey', // <-- add type
+    inStock: true,
+    type: 'Jersey',
   },
   {
     id: 3,
@@ -77,7 +76,7 @@ const PRODUCTS = [
     reviews: 89,
     description: 'Comfortable training shorts with moisture-wicking technology.',
     inStock: true,
-    type: 'Shorts', // <-- add type
+    type: 'Shorts',
   },
   {
     id: 4,
@@ -89,13 +88,18 @@ const PRODUCTS = [
     rating: 4.9,
     reviews: 98,
     description: 'Limited edition third kit jersey. Premium quality with unique design.',
-    inStock: false,
-    type: 'Jersey', // <-- add type
+    inStock: true,
+    type: 'Jersey',
   },
 ];
 
+// --- Utility Functions ---
+const getCartTotal = (cart) => Array.isArray(cart) ? cart.reduce((total, item) => total + (item.price * item.quantity), 0) : 0;
+const getCartItemCount = (cart) => Array.isArray(cart) ? cart.reduce((total, item) => total + item.quantity, 0) : 0;
+const cartHasJersey = (cart) => Array.isArray(cart) && cart.some(item => item.type === 'Jersey');
 
 export default function KitsScreen() {
+  // --- State ---
   const [cart, setCart] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -114,31 +118,39 @@ export default function KitsScreen() {
   const [checkoutJerseyNumber, setCheckoutJerseyNumber] = useState('');
   const [checkoutPincode, setCheckoutPincode] = useState('');
   const [isPaying, setIsPaying] = useState(false);
-  const [orders, setOrders] = useState([]); // [{id, date, items, total, status}]
+  const [orders, setOrders] = useState([]);
   const { user } = useUser();
 
-  useEffect(() => {
+  // --- Fetch Orders ---
+  const fetchOrders = useCallback(() => {
     if (!user?.id) return;
     fetch(`https://vulcan-rn-rxpo-3.onrender.com/api/orders/${user.id}`)
       .then(res => res.json())
       .then(data => setOrders(data))
-      .catch(err => {
-        // Optionally handle error
-        setOrders([]);
-      });
+      .catch(() => setOrders([]));
   }, [user?.id]);
 
-  // Filtered products based on filter state
-  const filteredProducts = filter === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.type === filter);
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
-  // Add product to cart
-  const addToCart = () => {
+  // --- Memoized Values ---
+  const filteredProducts = useMemo(() =>
+    filter === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.type === filter),
+    [filter]
+  );
+  const cartTotal = useMemo(() => getCartTotal(cart), [cart]);
+  const cartItemCount = useMemo(() => getCartItemCount(cart), [cart]);
+  const hasJersey = useMemo(() => cartHasJersey(cart), [cart]);
+
+  // --- Cart Operations ---
+  const addToCart = useCallback(() => {
     if (!selectedSize) {
       Alert.alert('Size Required', 'Please select a size before adding to cart.');
       return;
     }
     const cartItem = {
-      id: Date.now(), // Unique ID for cart item
+      id: Date.now(),
       productId: selectedProduct.id,
       name: selectedProduct.name,
       price: selectedProduct.price,
@@ -147,24 +159,18 @@ export default function KitsScreen() {
       image: selectedProduct.image,
       type: selectedProduct.type,
     };
-
     setCart(prev => [...prev, cartItem]);
-    
-    // Reset modal state
     setShowProductModal(false);
     setSelectedSize('');
     setQuantity(1);
-    
     Alert.alert('Added to Cart', `${selectedProduct.name} (${selectedSize}) added to cart!`);
-  };
+  }, [selectedProduct, selectedSize, quantity]);
 
-  // Remove item from cart
-  const removeFromCart = (itemId) => {
+  const removeFromCart = useCallback((itemId) => {
     setCart(prev => prev.filter(item => item.id !== itemId));
-  };
+  }, []);
 
-  // Update quantity in cart
-  const updateQuantity = (itemId, newQuantity) => {
+  const updateQuantity = useCallback((itemId, newQuantity) => {
     if (newQuantity === 0) {
       removeFromCart(itemId);
       return;
@@ -172,32 +178,49 @@ export default function KitsScreen() {
     setCart(prev => prev.map(item => 
       item.id === itemId ? { ...item, quantity: newQuantity } : item
     ));
-  };
+  }, [removeFromCart]);
 
-  // Calculate cart total
-  const getCartTotal = () => {
-    const safeCart = Array.isArray(cart) ? cart : [];
-    return safeCart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
+  // --- Modal Controls ---
+  const openProductModal = useCallback((product) => {
+    setShowProductModal(true);
+    setShowCartModal(false);
+    setShowCheckoutModal(false);
+    setShowRazorpay(false);
+    setSelectedProduct(product);
+  }, []);
 
-  // Get total items in cart
-  const getCartItemCount = () => {
-    const safeCart = Array.isArray(cart) ? cart : [];
-    return safeCart.reduce((total, item) => total + item.quantity, 0);
-  };
+  const openCartModal = useCallback(() => {
+    setShowCartModal(true);
+    setShowProductModal(false);
+    setShowCheckoutModal(false);
+    setShowRazorpay(false);
+  }, []);
 
-  // Handle checkout
-  const handleCheckout = () => {
+  const openCheckoutModal = useCallback(() => {
+    setShowCheckoutModal(true);
+    setShowProductModal(false);
+    setShowCartModal(false);
+    setShowRazorpay(false);
+  }, []);
+
+  const openRazorpayModal = useCallback(() => {
+    setShowRazorpay(true);
+    setShowProductModal(false);
+    setShowCartModal(false);
+    setShowCheckoutModal(false);
+  }, []);
+
+  // --- Checkout & Payment ---
+  const handleCheckout = useCallback(() => {
     if (cart.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to cart before checkout.');
       return;
     }
     setShowCartModal(false);
     openCheckoutModal();
-  };
+  }, [cart.length, openCheckoutModal]);
 
-  // New: handlePayNow to trigger Razorpay
-  const handlePayNow = async () => {
+  const handlePayNow = useCallback(async () => {
     if (isPaying) return;
     if (!checkoutName.trim() || !checkoutEmail.trim() || !checkoutPhone.trim() || !checkoutAddress.trim() || !checkoutPincode.trim()) {
       Alert.alert('Missing Details', 'Please fill all the details.');
@@ -211,7 +234,7 @@ export default function KitsScreen() {
       Alert.alert('Invalid Pincode', 'Please enter a valid 6-digit pincode.');
       return;
     }
-    if (cartHasJersey) {
+    if (hasJersey) {
       if (!checkoutJerseyName.trim()) {
         Alert.alert('Missing Jersey Name', 'Please enter a name for the jersey.');
         return;
@@ -223,12 +246,11 @@ export default function KitsScreen() {
     }
     setIsPaying(true);
     try {
-      // 1. Create Razorpay order on backend
       const response = await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/create-razorpay-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: getCartTotal(),
+          amount: cartTotal,
           currency: 'INR',
           receipt: `order_rcptid_${Date.now()}`
         })
@@ -243,10 +265,9 @@ export default function KitsScreen() {
     } finally {
       setIsPaying(false);
     }
-  };
+  }, [isPaying, checkoutName, checkoutEmail, checkoutPhone, checkoutAddress, checkoutPincode, hasJersey, checkoutJerseyName, checkoutJerseyNumber, cartTotal, openRazorpayModal]);
 
-  // Update handleRazorpayClose to use checkout details
-  const handleRazorpayClose = async (paymentData) => {
+  const handleRazorpayClose = useCallback(async (paymentData) => {
     setShowRazorpay(false);
     if (!paymentData) return;
     const safeCart = Array.isArray(cart) ? cart : [];
@@ -262,95 +283,31 @@ export default function KitsScreen() {
         userAddress: checkoutAddress,
         productName: safeCart.map(item => item.name).join(', '),
         quantity: safeCart.reduce((sum, item) => sum + item.quantity, 0),
-        total: getCartTotal(),
+        total: cartTotal,
         userPincode: checkoutPincode,
         jerseyName: checkoutJerseyName,
         jerseyNumber: checkoutJerseyNumber,
-        status: 'Pending', // Add status here
+        items: safeCart,
+        status: 'Pending',
       })
     });
     const verifyData = await verifyRes.json();
     if (verifyData.success) {
-      // Save order details to /api/orders
-      try {
-        const safeCart = Array.isArray(cart) ? cart : [];
-        await fetch('https://vulcan-rn-rxpo-3.onrender.com/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userEmail: checkoutEmail,
-            userID: user?.id,
-            items: safeCart, // <-- send the full cart array!
-            total: getCartTotal(),
-            userName: checkoutName,
-            userPhone: checkoutPhone,
-            userAddress: checkoutAddress,
-            userPincode: checkoutPincode,
-            jerseyName: checkoutJerseyName,
-            jerseyNumber: checkoutJerseyNumber,
-            status: 'Pending', // Add status here
-          })
-        });
-      } catch (e) {
-        // Optionally handle error
-        console.error('Error saving order to DB:', e);
-      }
       Alert.alert('Payment Success', 'Your order has been placed!');
-      setOrders(prev => [
-        {
-          id: Date.now(),
-          date: new Date().toLocaleString(),
-          items: cart.map(item => ({ ...item })),
-          total: getCartTotal(),
-          status: 'Pending',
-        },
-        ...prev
-      ]);
       setCart([]);
       setCheckoutName('');
       setCheckoutEmail('');
       setCheckoutPhone('');
       setCheckoutAddress('');
+      fetchOrders(); // Refresh orders from backend after placing order
     } else {
       Alert.alert('Payment Failed', verifyData.error || 'Could not verify payment');
     }
-  };
+  }, [cart, checkoutEmail, user?.id, checkoutName, checkoutPhone, checkoutAddress, checkoutPincode, checkoutJerseyName, checkoutJerseyNumber, cartTotal, fetchOrders]);
 
-  // Open product modal
-  const openProductModal = (product) => {
-    setShowProductModal(true);
-    setShowCartModal(false);
-    setShowCheckoutModal(false);
-    setShowRazorpay(false);
-    setSelectedProduct(product);
-  };
-
-  // Open cart modal
-  const openCartModal = () => {
-    setShowCartModal(true);
-    setShowProductModal(false);
-    setShowCheckoutModal(false);
-    setShowRazorpay(false);
-  };
-
-  // Open checkout modal
-  const openCheckoutModal = () => {
-    setShowCheckoutModal(true);
-    setShowProductModal(false);
-    setShowCartModal(false);
-    setShowRazorpay(false);
-  };
-
-  // Open Razorpay modal
-  const openRazorpayModal = () => {
-    setShowRazorpay(true);
-    setShowProductModal(false);
-    setShowCartModal(false);
-    setShowCheckoutModal(false);
-  };
-
+  // --- Render Functions (unchanged, but can be extracted for clarity if desired) ---
   // Render product card
-  const renderProduct = ({ item }) => (
+  const renderProduct = useCallback(({ item }) => (
     <TouchableOpacity 
       style={styles.productCard}
       onPress={() => openProductModal(item)}
@@ -380,10 +337,10 @@ export default function KitsScreen() {
         </View>
       </View>
     </TouchableOpacity>
-  );
+  ), [openProductModal]);
 
   // Render cart item
-  const renderCartItem = ({ item }) => (
+  const renderCartItem = useCallback(({ item }) => (
     <View style={styles.cartItem}>
       <Image source={item.image} style={styles.cartItemImage} />
       
@@ -425,11 +382,9 @@ export default function KitsScreen() {
         <X size={16} color={COLORS.textLight} />
       </TouchableOpacity>
     </View>
-  );
+  ), [updateQuantity, removeFromCart]);
 
-  // Helper: does cart have a jersey?
-  const cartHasJersey = cart.some(item => item.type === 'Jersey');
-
+  // --- Main Render ---
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -438,20 +393,15 @@ export default function KitsScreen() {
           <ShoppingBag size={28} color={COLORS.primary} />
           <Text style={styles.headerTitle}>Club Store</Text>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.cartButton}
-          onPress={openCartModal}
-        >
+        <TouchableOpacity style={styles.cartButton} onPress={openCartModal}>
           <ShoppingCart size={24} color={COLORS.primary} />
-          {getCartItemCount() > 0 && (
+          {cartItemCount > 0 && (
             <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{getCartItemCount()}</Text>
+              <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
             </View>
           )}
         </TouchableOpacity>
       </View>
-
       {/* Filter Tabs */}
       <View style={styles.tabContainer}>
         {['All', 'Jersey', 'Shorts', 'My Orders'].map((tab) => (
@@ -464,8 +414,7 @@ export default function KitsScreen() {
           </TouchableOpacity>
         ))}
       </View>
-
-      {/* Products Grid */}
+      {/* Products Grid or Orders */}
       {filter === 'My Orders' ? (
         <ScrollView style={styles.ordersContainer}>
           <Text style={styles.sectionTitle}>My Orders</Text>
@@ -514,8 +463,7 @@ export default function KitsScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-
-      {/* Product Selection Modal */}
+      {/* Product Modal */}
       <Modal
         visible={showProductModal}
         transparent={true}
@@ -646,7 +594,7 @@ export default function KitsScreen() {
                 />
                 <View style={styles.cartFooter}>
                   <View style={styles.cartTotal}>
-                    <Text style={styles.cartTotalText}>Total: ₹{getCartTotal()}</Text>
+                    <Text style={styles.cartTotalText}>Total: ₹{cartTotal}</Text>
                   </View>
                   <TouchableOpacity 
                     style={styles.checkoutButton} 
@@ -729,7 +677,7 @@ export default function KitsScreen() {
                 placeholderTextColor={COLORS.textLight}
               />
               {/* Jersey fields if needed */}
-              {cartHasJersey && (
+              {hasJersey && (
                 <>
                   <Text style={styles.checkoutSectionTitle}>Jersey Customization</Text>
                   <Text style={{ color: COLORS.warning, fontSize: 13, marginBottom: 8 }}>
@@ -770,7 +718,7 @@ export default function KitsScreen() {
                 </View>
               </View>
               <View style={styles.checkoutTotal}>
-                <Text style={styles.checkoutTotalText}>Total: ₹{getCartTotal()}</Text>
+                <Text style={styles.checkoutTotalText}>Total: ₹{cartTotal}</Text>
               </View>
               <View style={{ padding: 20, backgroundColor: COLORS.card, borderTopWidth: 1, borderTopColor: COLORS.border }}>
               <TouchableOpacity style={styles.checkoutButton} onPress={handlePayNow} disabled={isPaying}>

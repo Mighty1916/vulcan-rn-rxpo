@@ -526,6 +526,29 @@ export default function HomeScreen() {
   ]);
   const unreadAlerts = alerts.filter(a => !a.read).length;
 
+  // Add state for past bookings
+  const [friendlies, setFriendlies] = useState([]);
+  const [loadingFriendlies, setLoadingFriendlies] = useState(false);
+
+  // Fetch friendlies for the user
+  const fetchFriendlies = useCallback(() => {
+    if (!user?.id) return;
+    setLoadingFriendlies(true);
+    fetch(`https://vulcan-rn-rxpo-3.onrender.com/api/friendly-booking/${user.id}`)
+      .then(res => res.json())
+      .then(data => setFriendlies(Array.isArray(data) ? data : []))
+      .catch(() => setFriendlies([]))
+      .finally(() => setLoadingFriendlies(false));
+  }, [user?.id]);
+
+  // Fetch bookings when Book Friendly modal opens
+  useEffect(() => {
+    if (showBookFriendlyModal) fetchFriendlies();
+  }, [showBookFriendlyModal, fetchFriendlies]);
+
+  // Add state for filter tab in Book Friendly modal
+  const [friendlyTab, setFriendlyTab] = useState('Book Friendly'); // 'Book Friendly' or 'Past Bookings'
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -750,120 +773,177 @@ export default function HomeScreen() {
                 <X size={20} color={COLORS.text} />
               </TouchableOpacity>
             </View>
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-            >
-              {/* Calendar Section */}
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeader}>
-                  <View style={styles.sectionIcon}>
-                    <Calendar size={16} color={COLORS.primary} />
+            {/* Add the filter tabs: */}
+            <View style={styles.friendlyTabBar}>
+              {['Book Friendly', 'Past Bookings'].map(tab => (
+                <TouchableOpacity
+                  key={tab}
+                  style={[
+                    styles.friendlyTab,
+                    friendlyTab === tab && styles.friendlyTabActive
+                  ]}
+                  onPress={() => setFriendlyTab(tab)}
+                >
+                  <Text style={[
+                    styles.friendlyTabText,
+                    friendlyTab === tab && styles.friendlyTabTextActive
+                  ]}>{tab}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {/* Replace the ScrollView content in the modal with: */}
+            {friendlyTab === 'Book Friendly' ? (
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+              >
+                {/* Calendar Section */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIcon}>
+                      <Calendar size={16} color={COLORS.primary} />
+                    </View>
+                    <Text style={styles.sectionTitleEnhanced}>Select Date</Text>
                   </View>
-                  <Text style={styles.sectionTitleEnhanced}>Select Date</Text>
-                </View>
-                
-                {/* Calendar Header */}
-                <View style={styles.calendarHeader}>
-                  <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.calendarNavButton}>
-                    <Text style={styles.calendarNavText}>‹</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.calendarMonthText}>
-                    {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </Text>
-                  <TouchableOpacity onPress={() => changeMonth(1)} style={styles.calendarNavButton}>
-                    <Text style={styles.calendarNavText}>›</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                {/* Calendar Days */}
-                <View style={styles.calendarDaysHeader}>
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <Text key={day} style={styles.calendarDayHeader}>{day}</Text>
-                  ))}
-                </View>
-                
-                <View style={styles.calendarGrid}>
-                  {generateCalendarDays().map((day, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.calendarDay,
-                        !day.isCurrentMonth && styles.calendarDayOtherMonth,
-                        day.isPast && styles.calendarDayPast,
-                        day.isToday && styles.calendarDayToday,
-                        day.isSelected && styles.calendarDaySelected,
-                      ]}
-                      onPress={() => handleDateSelect(day)}
-                      disabled={day.isPast}
-                    >
-                      <Text style={[
-                        styles.calendarDayText,
-                        !day.isCurrentMonth && styles.calendarDayTextOtherMonth,
-                        day.isPast && styles.calendarDayTextPast,
-                        day.isToday && styles.calendarDayTextToday,
-                        day.isSelected && styles.calendarDayTextSelected,
-                      ]}>
-                        {day.date.getDate()}
-                      </Text>
+                  
+                  {/* Calendar Header */}
+                  <View style={styles.calendarHeader}>
+                    <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.calendarNavButton}>
+                      <Text style={styles.calendarNavText}>‹</Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-              
-              {/* Time Slots Section */}
-              <View style={styles.sectionContainer}>
-                <View style={styles.sectionHeader}>
-                  <View style={styles.sectionIcon}>
-                    <Calendar size={16} color={COLORS.primary} />
-                  </View>
-                  <Text style={styles.sectionTitleEnhanced}>Select Time</Text>
-                </View>
-                <View style={styles.timeSlotsContainer}>
-                  {timeSlots().map((timeSlot) => (
-                    <TouchableOpacity
-                      key={timeSlot}
-                      style={[
-                        styles.timeSlotButton,
-                        selectedTimeSlot === timeSlot && styles.selectedTimeSlotButton
-                      ]}
-                      onPress={() => handleTimeSlotSelect(timeSlot)}
-                    >
-                      <Text style={[
-                        styles.timeSlotText,
-                        selectedTimeSlot === timeSlot && styles.selectedTimeSlotText
-                      ]}>
-                        {timeSlot}
-                      </Text>
+                    <Text style={styles.calendarMonthText}>
+                      {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </Text>
+                    <TouchableOpacity onPress={() => changeMonth(1)} style={styles.calendarNavButton}>
+                      <Text style={styles.calendarNavText}>›</Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-              
-              {/* Selected Details */}
-              {(selectedDate || selectedTimeSlot) && (
-                <View style={styles.selectedDetailsContainer}>
-                  <View style={styles.selectedDetailsHeader}>
-                    <View style={styles.selectedDetailsIcon}>
-                      <Calendar size={16} color={COLORS.white} />
-                    </View>
-                    <Text style={styles.selectedDetailsTitle}>Selected Details</Text>
                   </View>
-                  {selectedDate && (
-                    <View style={styles.selectedDetailRow}>
-                      <Text style={styles.selectedDetailLabel}>Date:</Text>
-                      <Text style={styles.selectedDetailValue}>{selectedDate.toLocaleDateString()}</Text>
+                  
+                  {/* Calendar Days */}
+                  <View style={styles.calendarDaysHeader}>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                      <Text key={day} style={styles.calendarDayHeader}>{day}</Text>
+                    ))}
+                  </View>
+                  
+                  <View style={styles.calendarGrid}>
+                    {generateCalendarDays().map((day, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.calendarDay,
+                          !day.isCurrentMonth && styles.calendarDayOtherMonth,
+                          day.isPast && styles.calendarDayPast,
+                          day.isToday && styles.calendarDayToday,
+                          day.isSelected && styles.calendarDaySelected,
+                        ]}
+                        onPress={() => handleDateSelect(day)}
+                        disabled={day.isPast}
+                      >
+                        <Text style={[
+                          styles.calendarDayText,
+                          !day.isCurrentMonth && styles.calendarDayTextOtherMonth,
+                          day.isPast && styles.calendarDayTextPast,
+                          day.isToday && styles.calendarDayTextToday,
+                          day.isSelected && styles.calendarDayTextSelected,
+                        ]}>
+                          {day.date.getDate()}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                
+                {/* Time Slots Section */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIcon}>
+                      <Calendar size={16} color={COLORS.primary} />
                     </View>
-                  )}
-                  {selectedTimeSlot && (
-                    <View style={styles.selectedDetailRow}>
-                      <Text style={styles.selectedDetailLabel}>Time:</Text>
-                      <Text style={styles.selectedDetailValue}>{selectedTimeSlot}</Text>
+                    <Text style={styles.sectionTitleEnhanced}>Select Time</Text>
+                  </View>
+                  <View style={styles.timeSlotsContainer}>
+                    {timeSlots().map((timeSlot) => (
+                      <TouchableOpacity
+                        key={timeSlot}
+                        style={[
+                          styles.timeSlotButton,
+                          selectedTimeSlot === timeSlot && styles.selectedTimeSlotButton
+                        ]}
+                        onPress={() => handleTimeSlotSelect(timeSlot)}
+                      >
+                        <Text style={[
+                          styles.timeSlotText,
+                          selectedTimeSlot === timeSlot && styles.selectedTimeSlotText
+                        ]}>
+                          {timeSlot}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                
+                {/* Selected Details */}
+                {(selectedDate || selectedTimeSlot) && (
+                  <View style={styles.selectedDetailsContainer}>
+                    <View style={styles.selectedDetailsHeader}>
+                      <View style={styles.selectedDetailsIcon}>
+                        <Calendar size={16} color={COLORS.white} />
+                      </View>
+                      <Text style={styles.selectedDetailsTitle}>Selected Details</Text>
                     </View>
+                    {selectedDate && (
+                      <View style={styles.selectedDetailRow}>
+                        <Text style={styles.selectedDetailLabel}>Date:</Text>
+                        <Text style={styles.selectedDetailValue}>{selectedDate.toLocaleDateString()}</Text>
+                      </View>
+                    )}
+                    {selectedTimeSlot && (
+                      <View style={styles.selectedDetailRow}>
+                        <Text style={styles.selectedDetailLabel}>Time:</Text>
+                        <Text style={styles.selectedDetailValue}>{selectedTimeSlot}</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </ScrollView>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <View style={styles.sectionIcon}>
+                      <Calendar size={16} color={COLORS.primary} />
+                    </View>
+                    <Text style={styles.sectionTitleEnhanced}>Your Past Bookings</Text>
+                  </View>
+                  {loadingFriendlies ? (
+                    <ActivityIndicator color={COLORS.primary} style={{ marginTop: 20 }} />
+                  ) : friendlies.length === 0 ? (
+                    <Text style={{ color: COLORS.textLight, textAlign: 'center', marginTop: 10 }}>No friendlies booked yet.</Text>
+                  ) : (
+                    friendlies.map(f => (
+                      <View key={f.id} style={styles.pastBookingCard}>
+                        <View style={styles.pastBookingHeader}>
+                          <Text style={styles.pastBookingId}>#{f.id}</Text>
+                          <View style={styles.pastBookingStatus}>
+                            <Text style={styles.pastBookingStatusText}>Booked</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.pastBookingDate}>{f.date} {f.time}</Text>
+                        <View style={styles.pastBookingDetails}>
+                          <Text><Text style={styles.pastBookingLabel}>Team:</Text><Text style={styles.pastBookingValue}> {f.teamName}</Text></Text>
+                          <Text><Text style={styles.pastBookingLabel}>Ground:</Text><Text style={styles.pastBookingValue}> {f.matchGround}</Text></Text>
+                        </View>
+                        <View style={styles.pastBookingFooter}>
+                          <Text style={styles.pastBookingLabel}>Name: <Text style={styles.pastBookingValue}>{f.name}</Text></Text>
+                          <Text style={styles.pastBookingLabel}>ID: <Text style={styles.pastBookingValue}>{f.id}</Text></Text>
+                        </View>
+                      </View>
+                    ))
                   )}
                 </View>
-              )}
-            </ScrollView>
+              </ScrollView>
+            )}
             
             {/* Proceed Button */}
             <TouchableOpacity 
