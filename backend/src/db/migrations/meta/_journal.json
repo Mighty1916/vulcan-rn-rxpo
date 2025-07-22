@@ -43,6 +43,13 @@
       "when": 1753221723429,
       "tag": "0005_fresh_black_crow",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1753223318905,
+      "tag": "0006_groovy_the_call",
+      "breakpoints": true
     }
   ]
 }

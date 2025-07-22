@@ -15,6 +15,7 @@ export const orders = pgTable("orders", {
     jerseyName: varchar("jersey_name", { length: 32 }),
     jerseyNumber: varchar("jersey_number", { length: 8 }),
     items: jsonb("items"),
+    status: varchar("status", { length: 32 }).default('Pending'),
 }); 
 
 export const clubApplications = pgTable("club_applications", {

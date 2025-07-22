@@ -44,6 +44,7 @@ app.post("/api/orders", async (req, res) => {
         userPincode,
         jerseyName,
         jerseyNumber,
+        status: "Pending",
       })
       .returning();
 
@@ -194,6 +195,7 @@ app.post("/api/verify-razorpay-payment", async (req, res) => {
         userPincode,
         jerseyName,
         jerseyNumber,
+        status: "Pending",
       })
       .returning();
 

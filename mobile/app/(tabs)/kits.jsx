@@ -266,6 +266,7 @@ export default function KitsScreen() {
         userPincode: checkoutPincode,
         jerseyName: checkoutJerseyName,
         jerseyNumber: checkoutJerseyNumber,
+        status: 'Pending', // Add status here
       })
     });
     const verifyData = await verifyRes.json();
@@ -287,6 +288,7 @@ export default function KitsScreen() {
             userPincode: checkoutPincode,
             jerseyName: checkoutJerseyName,
             jerseyNumber: checkoutJerseyNumber,
+            status: 'Pending', // Add status here
           })
         });
       } catch (e) {
@@ -472,6 +474,7 @@ export default function KitsScreen() {
           ) : (
             orders.map(order => (
               <View key={order.id} style={styles.orderCard}>
+                {/* Order Header: ID and Status */}
                 <View style={styles.orderHeader}>
                   <Text style={styles.orderId}>Order #{order.id}</Text>
                   <View style={[styles.statusBadge, {
@@ -481,15 +484,17 @@ export default function KitsScreen() {
                     <Text style={styles.statusText}>{order.status}</Text>
                   </View>
                 </View>
-                <Text style={styles.orderDate}>{order.date}</Text>
+                {/* Order Date/Time */}
+                <Text style={styles.orderDate}>{order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}</Text>
+                {/* Order Items */}
                 <View style={styles.orderItems}>
-                  {(() => {
-                    const safeItems = Array.isArray(order.items) ? order.items : [];
-                    return safeItems.map((item, idx) => (
-                      <Text key={idx} style={styles.orderItemText}>{item.name} (Size: {item.size}) x{item.quantity}</Text>
-                    ));
-                  })()}
+                  {Array.isArray(order.items) && order.items.map((item, idx) => (
+                    <View key={idx} style={styles.orderItemRow}>
+                      <Text style={styles.orderItemText}>{item.name} (Size: {item.size}) x{item.quantity}</Text>
+                    </View>
+                  ))}
                 </View>
+                {/* Order Footer: Total and Tracking Number */}
                 <View style={styles.orderFooter}>
                   <Text style={styles.orderTotal}>Total: ₹{order.total}</Text>
                   <Text style={styles.trackingNumber}>ID: {order.id}</Text>
