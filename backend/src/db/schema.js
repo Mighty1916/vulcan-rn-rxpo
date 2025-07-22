@@ -3,8 +3,8 @@ import { pgTable, serial, text, timestamp, integer, varchar, jsonb } from "drizz
 export const orders = pgTable("orders", {
     id: serial("id").primaryKey(),
     userEmail: varchar("user_email", { length: 255 }).notNull(),
-    productName: varchar("product_name", { length: 255 }).notNull(),
-    quantity: integer("quantity").default(1),
+    productName: varchar("product_name", { length: 255 }),
+    quantity: integer("quantity"),
     total: integer("total").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     userID: text("user_id").notNull(),
