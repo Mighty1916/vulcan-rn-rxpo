@@ -4,9 +4,36 @@ import { Redirect, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../constants/colors";
 import { TouchableOpacity, Platform } from "react-native";
+import { useUser } from '@clerk/clerk-expo';
+import { useState, useEffect } from 'react';
 
 const TabsLayout = () => {
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user?.emailAddresses?.[0]?.emailAddress) {
+      const email = user.emailAddresses[0].emailAddress;
+      
+      // Check if email is admin
+      fetch('https://vulcan-rn-rxpo-3.onrender.com/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      })
+      .catch(() => setIsAdmin(false));
+    }
+  }, [user]);
 
   if (!isLoaded) return null;
   if (!isSignedIn) return <Redirect href={"/(auth)/sign-in"} />;
@@ -64,6 +91,15 @@ const TabsLayout = () => {
           tabBarIcon: ({ color, size }) => <Ionicons name="football" size={size} color={color} />, // Join icon
         }}
       />
+      {isAdmin && (
+        <Tabs.Screen
+          name="admin"
+          options={{
+            title: "Admin",
+            tabBarIcon: ({ color, size }) => <Ionicons name="shield" size={size} color={color} />, // Admin icon
+          }}
+        />
+      )}
       <Tabs.Screen
         name="announcements"
         options={{
