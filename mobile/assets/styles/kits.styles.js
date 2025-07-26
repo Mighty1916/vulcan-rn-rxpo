@@ -2,6 +2,8 @@ import { COLORS } from "../../constants/colors";
 import { StyleSheet, } from 'react-native';
 
 export const styles = StyleSheet.create({
+    // Add comments to group related style blocks (header, tabs, product, modal, cart, checkout, orders, etc.)
+    // Remove unused styles and ensure naming consistency
     container: {
       flex: 1,
       backgroundColor: COLORS.background,

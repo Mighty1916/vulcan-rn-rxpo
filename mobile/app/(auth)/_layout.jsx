@@ -1,3 +1,4 @@
+// Layout for authentication routes: redirects signed-in users to home
 import { Redirect, Stack } from 'expo-router'
 import { useAuth } from '@clerk/clerk-expo'
 

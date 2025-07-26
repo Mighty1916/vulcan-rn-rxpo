@@ -2,6 +2,7 @@ import { COLORS } from "../../constants/colors";
 import { StyleSheet, } from 'react-native';
 
 export const styles = StyleSheet.create({
+    // Container and Layout
     container: {
       flex: 1,
       backgroundColor: COLORS.background,
@@ -15,7 +16,6 @@ export const styles = StyleSheet.create({
     scrollContent: {
       paddingBottom: 60,
     },
-    
     // Header Styles
     header: {
       paddingHorizontal: 20,
@@ -38,7 +38,6 @@ export const styles = StyleSheet.create({
       color: COLORS.textLight,
       lineHeight: 22,
     },
-    
     // Form Styles
     formContainer: {
       paddingHorizontal: 20,
@@ -52,6 +51,7 @@ export const styles = StyleSheet.create({
       color: COLORS.text,
       marginBottom: 16,
     },
+    // Input Styles
     inputGroup: {
       marginBottom: 16,
     },
@@ -87,7 +87,6 @@ export const styles = StyleSheet.create({
       minHeight: 60,
       textAlignVertical: 'top',
     },
-    
     // Submit Button Styles
     submitButton: {
       flexDirection: 'row',
@@ -114,7 +113,6 @@ export const styles = StyleSheet.create({
       fontWeight: '600',
       marginLeft: 8,
     },
-    
     // Info Text
     infoText: {
       fontSize: 12,

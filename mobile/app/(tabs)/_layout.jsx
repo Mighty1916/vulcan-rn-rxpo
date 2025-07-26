@@ -1,3 +1,4 @@
+// Tab layout for main app navigation. Redirects unauthenticated users to sign-in.
 import { useAuth } from "@clerk/clerk-expo";
 import { Redirect, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,19 +9,19 @@ const TabsLayout = () => {
   const { isSignedIn, isLoaded } = useAuth();
 
   if (!isLoaded) return null;
-
   if (!isSignedIn) return <Redirect href={"/(auth)/sign-in"} />;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarButton:  (props) => (
-          <TouchableOpacity
-          {...props} activeOpacity={0.8} />
+        // Custom tab bar button for better touch feedback
+        tabBarButton: (props) => (
+          <TouchableOpacity {...props} activeOpacity={0.8} />
         ),
         headerShown: false,
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textLight,
+        // Custom tab bar style for rounded, elevated look
         tabBarStyle: {
           position: 'absolute',
           bottom: 0,
@@ -34,7 +35,7 @@ const TabsLayout = () => {
           elevation: 50,
           borderTopWidth: 2,
           borderColor: '#f3f3f3',
-          paddingTop: 4
+          paddingTop: 4,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -46,31 +47,32 @@ const TabsLayout = () => {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />, // Home icon
         }}
       />
       <Tabs.Screen
         name="kits"
         options={{
           title: "Kits",
-          tabBarIcon: ({ color, size }) => <Ionicons name="shirt" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="shirt" size={size} color={color} />, // Kits icon
         }}
       />
       <Tabs.Screen
         name="join"
         options={{
           title: "join-us",
-          tabBarIcon: ({ color, size }) => <Ionicons name="football" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="football" size={size} color={color} />, // Join icon
         }}
       />
       <Tabs.Screen
         name="announcements"
         options={{
           title: "news",
-          tabBarIcon: ({ color, size }) => <Ionicons name="megaphone" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="megaphone" size={size} color={color} />, // News icon
         }}
       />
     </Tabs>
   );
 };
+
 export default TabsLayout;

@@ -23,6 +23,7 @@ export default function VerifyEmailScreen() {
   const [errors, setErrors] = useState({});
   const [resendTimer, setResendTimer] = useState(0);
   const [focusedInput, setFocusedInput] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const { email } = useLocalSearchParams();
 
@@ -33,57 +34,44 @@ export default function VerifyEmailScreen() {
     }
   }, [resendTimer]);
 
+  // Handle verification
   const onPressVerify = async () => {
     if (!isLoaded) return;
-
     setLoading(true);
     setErrors({});
-
+    setErrorMsg('');
+    if (!code) {
+      setErrorMsg('Please enter the verification code.');
+      setLoading(false);
+      return;
+    }
     try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-
+      const completeSignUp = await signUp.attemptEmailAddressVerification({ code });
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId });
         // Navigation will be handled by your auth context
       } else {
-        // Handle other verification states if needed
-        console.log('Verification not complete:', completeSignUp.status);
+        setErrorMsg('Verification not complete.');
       }
-    } catch (err) {
-      console.error('Verification error:', err);
-      if (err.errors) {
-        const newErrors = {};
-        err.errors.forEach((error) => {
-          if (error.meta?.paramName) {
-            newErrors[error.meta.paramName] = error.message;
-          } else {
-            newErrors.general = error.message;
-          }
-        });
-        setErrors(newErrors);
-      } else {
-        Alert.alert('Error', 'Failed to verify email. Please try again.');
-      }
+    } catch {
+      setErrorMsg('Failed to verify email. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle resend code
   const onResendPress = async () => {
     if (!isLoaded || resendTimer > 0) return;
-
     setResendLoading(true);
     setErrors({});
-
+    setErrorMsg('');
     try {
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setResendTimer(60); // 60 seconds cooldown
       Alert.alert('Success', 'Verification code sent to your email.');
-    } catch (err) {
-      console.error('Resend error:', err);
-      Alert.alert('Error', 'Failed to resend verification code. Please try again.');
+    } catch {
+      setErrorMsg('Failed to resend verification code. Please try again.');
     } finally {
       setResendLoading(false);
     }
@@ -109,7 +97,7 @@ export default function VerifyEmailScreen() {
       >
         <View style={authStyles.logoContainer}>
           <Image
-          source={require("../../assets/images/logo-removebg-preview.png")}
+            source={require("../../assets/images/logo-removebg-preview.png")}
             style={authStyles.logo}
           />
         </View>
@@ -123,7 +111,7 @@ export default function VerifyEmailScreen() {
 
         <View style={authStyles.verificationContainer}>
           <Text style={authStyles.verificationText}>
-            Enter the 6-digit verification code sent to{'\n'}
+            Enter the 6-digit verification code sent to{"\n"}
             <Text style={{ fontWeight: 'bold', color: '#2C3E50' }}>
               {email || 'your email'}
             </Text>
@@ -152,6 +140,7 @@ export default function VerifyEmailScreen() {
             {errors.general && (
               <Text style={authStyles.errorText}>{errors.general}</Text>
             )}
+            {errorMsg ? <Text style={authStyles.errorText}>{errorMsg}</Text> : null}
           </View>
 
           <TouchableOpacity

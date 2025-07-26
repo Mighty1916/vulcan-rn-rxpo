@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ const COLORS = {
 };
 
 export default function JoinClubScreen() {
+  // --- State ---
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -38,61 +39,52 @@ export default function JoinClubScreen() {
     emergencyContact: '',
     emergencyPhone: '',
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useUser();
 
-  const handleInputChange = (field, value) => {
+  // --- Handlers ---
+  const handleInputChange = useCallback((field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
-  const validateForm = () => {
+  // --- Validation ---
+  const validateForm = useCallback(() => {
     const requiredFields = ['fullName', 'email', 'phone', 'address', 'dateOfBirth', 'position'];
-    
     for (let field of requiredFields) {
       if (!formData[field].trim()) {
         Alert.alert('Missing Information', `Please fill in your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
     }
-
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address');
       return false;
     }
-
     // Basic phone validation
     const phoneRegex = /^[\d\s\-\+\(\)]+$/;
     if (!phoneRegex.test(formData.phone)) {
       Alert.alert('Invalid Phone', 'Please enter a valid phone number');
       return false;
     }
-
     return true;
-  };
+  }, [formData]);
 
-  const handleSubmit = async () => {
+  // --- Submit Handler ---
+  const handleSubmit = useCallback(async () => {
     if (!validateForm()) return;
-
+    setIsSubmitting(true);
     try {
       const response = await fetch("https://vulcan-rn-rxpo-3.onrender.com/api/apply", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...formData,
-          userID: user?.id,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, userID: user?.id }),
       });
-    
       const result = await response.json();
-    
       if (response.ok) {
         Alert.alert(
           'Application Submitted!',
@@ -111,14 +103,9 @@ export default function JoinClubScreen() {
     } finally {
       setIsSubmitting(false);
     }
-    
+  }, [formData, user?.id, validateForm]);
 
-  };
-
-    const positions = [
-    'Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Striker', 'Winger',
-  ];
-
+  // --- Render ---
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
@@ -146,7 +133,7 @@ export default function JoinClubScreen() {
             {/* Personal Information Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Personal Information</Text>
-              
+              {/* Full Name */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Full Name *</Text>
                 <View style={styles.inputContainer}>
@@ -160,7 +147,7 @@ export default function JoinClubScreen() {
                   />
                 </View>
               </View>
-
+              {/* Email */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email Address *</Text>
                 <View style={styles.inputContainer}>
@@ -176,7 +163,7 @@ export default function JoinClubScreen() {
                   />
                 </View>
               </View>
-
+              {/* Phone */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Phone Number *</Text>
                 <View style={styles.inputContainer}>
@@ -191,7 +178,7 @@ export default function JoinClubScreen() {
                   />
                 </View>
               </View>
-
+              {/* Address */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Address *</Text>
                 <View style={styles.inputContainer}>
@@ -206,7 +193,7 @@ export default function JoinClubScreen() {
                   />
                 </View>
               </View>
-
+              {/* Date of Birth */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Date of Birth *</Text>
                 <View style={styles.inputContainer}>
@@ -221,11 +208,10 @@ export default function JoinClubScreen() {
                 </View>
               </View>
             </View>
-
             {/* Football Information Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Football Information</Text>
-              
+              {/* Position */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Preferred Position *</Text>
                 <View style={styles.inputContainer}>
@@ -239,7 +225,7 @@ export default function JoinClubScreen() {
                   />
                 </View>
               </View>
-
+              {/* Previous Clubs */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Previous Clubs</Text>
                 <View style={styles.inputContainer}>
@@ -254,7 +240,6 @@ export default function JoinClubScreen() {
                 </View>
               </View>
             </View>
-
             {/* Submit Button */}
             <TouchableOpacity 
               style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
@@ -266,7 +251,6 @@ export default function JoinClubScreen() {
                 {isSubmitting ? 'Submitting...' : 'Submit Application'}
               </Text>
             </TouchableOpacity>
-
             {/* Info Text */}
             <Text style={styles.infoText}>
               * Required fields. Your application will be reviewed by our admin team and we will contact you for trial.
@@ -276,4 +260,4 @@ export default function JoinClubScreen() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-};
+}

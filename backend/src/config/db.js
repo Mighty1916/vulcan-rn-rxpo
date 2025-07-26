@@ -1,3 +1,4 @@
+// Database connection using drizzle-orm and Neon
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { ENV } from "./env.js";

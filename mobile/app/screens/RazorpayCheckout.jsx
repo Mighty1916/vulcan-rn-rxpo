@@ -1,9 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { Modal, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
+// RazorpayCheckout: Presents a Razorpay payment modal using a WebView. Calls onClose with payment data or null.
 export default function RazorpayCheckout({ visible, onClose, order, userEmail }) {
   const webviewRef = useRef(null);
+
+  // Memoized handler for WebView messages
+  const handleMessage = useCallback(event => {
+    const data = JSON.parse(event.nativeEvent.data);
+    onClose(data);
+  }, [onClose]);
 
   if (!order) return null;
 
@@ -43,10 +50,7 @@ export default function RazorpayCheckout({ visible, onClose, order, userEmail })
           ref={webviewRef}
           originWhitelist={['*']}
           source={{ html: htmlContent }}
-          onMessage={event => {
-            const data = JSON.parse(event.nativeEvent.data);
-            onClose(data);
-          }}
+          onMessage={handleMessage}
         />
       </View>
     </Modal>

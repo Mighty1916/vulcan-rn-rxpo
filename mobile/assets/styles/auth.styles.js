@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 export const authStyles = StyleSheet.create({
+  // Main container for auth screens
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
@@ -11,6 +12,7 @@ export const authStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 30,
   },
+  // Logo and branding
   logoContainer: {
     alignItems: 'center',
     marginBottom: 20,
@@ -22,6 +24,7 @@ export const authStyles = StyleSheet.create({
     marginBottom: -20,
     marginTop:-30,
   },
+  // Header section
   header: {
     alignItems: 'center',
     marginBottom: 40,
@@ -41,6 +44,7 @@ export const authStyles = StyleSheet.create({
     fontWeight: '300',
     letterSpacing: 0.5,
   },
+  // Form section
   form: {
     marginBottom: 20,
   },
@@ -86,6 +90,7 @@ export const authStyles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '500',
   },
+  // Buttons
   button: {
     height: 55,
     backgroundColor: '#2C3E50',
@@ -129,6 +134,7 @@ export const authStyles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  // Footer links and text
   footer: {
     alignItems: 'center',
     marginTop: 30,
@@ -146,6 +152,7 @@ export const authStyles = StyleSheet.create({
     textDecorationLine: 'underline',
     marginTop: '20'
   },
+  // Divider for social login
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -162,6 +169,7 @@ export const authStyles = StyleSheet.create({
     color: '#7F8C8D',
     fontWeight: '500',
   },
+  // Social login button
   socialButton: {
     height: 55,
     borderWidth: 1,
@@ -185,6 +193,7 @@ export const authStyles = StyleSheet.create({
     color: '#2C3E50',
     fontWeight: '600',
   },
+  // Verification code input
   verificationContainer: {
     alignItems: 'center',
     marginBottom: 25,
@@ -219,6 +228,7 @@ export const authStyles = StyleSheet.create({
     elevation: 5,
     color: '#2C3E50',
   },
+  // Resend code section
   resendContainer: {
     alignItems: 'center',
     marginTop: 30,
@@ -239,6 +249,7 @@ export const authStyles = StyleSheet.create({
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
+  // Loading overlay
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -251,6 +262,7 @@ export const authStyles = StyleSheet.create({
     color: '#7F8C8D',
     fontWeight: '500',
   },
+  // Gradient background (if used)
   gradientBackground: {
     position: 'absolute',
     left: 0,
@@ -258,6 +270,7 @@ export const authStyles = StyleSheet.create({
     top: 0,
     height: '100%',
   },
+  // Name row for sign up
   nameRow: {
     flexDirection: 'row',
     gap: 10,

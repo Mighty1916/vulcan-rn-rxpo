@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   ActivityIndicator,
   Image,
 } from 'react-native';
@@ -16,7 +15,7 @@ import { Link, router } from 'expo-router';
 import { authStyles } from '../../assets/styles/auth.styles';
 
 export default function SignUpScreen() {
-  const { isLoaded, signUp, } = useSignUp();
+  const { isLoaded, signUp } = useSignUp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -24,13 +23,19 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [focusedInput, setFocusedInput] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
+  // Handle sign up
   const onSignUpPress = async () => {
     if (!isLoaded) return;
-
     setLoading(true);
     setErrors({});
-
+    setErrorMsg('');
+    if (!firstName || !lastName || !email || !password) {
+      setErrorMsg('Please fill in all fields.');
+      setLoading(false);
+      return;
+    }
     try {
       await signUp.create({
         emailAddress: email,
@@ -38,16 +43,10 @@ export default function SignUpScreen() {
         firstName,
         lastName,
       });
-
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-
       // Navigate to verification screen
-      router.push({
-        pathname: '/verify-email',
-        params: { email }
-      });
+      router.push({ pathname: '/verify-email', params: { email } });
     } catch (err) {
-      console.error('Sign up error:', err);
       if (err.errors) {
         const newErrors = {};
         err.errors.forEach((error) => {
@@ -56,8 +55,9 @@ export default function SignUpScreen() {
           }
         });
         setErrors(newErrors);
+        setErrorMsg(err.errors[0]?.message || 'Failed to sign up.');
       } else {
-        Alert.alert('Error', 'Failed to sign up. Please try again.');
+        setErrorMsg('Failed to sign up. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ export default function SignUpScreen() {
       >
         <View style={authStyles.logoContainer}>
           <Image
-          source={require("../../assets/images/logo-removebg-preview.png")}
+            source={require("../../assets/images/logo-removebg-preview.png")}
             style={authStyles.logo}
           />
         </View>
@@ -185,6 +185,8 @@ export default function SignUpScreen() {
               <Text style={authStyles.errorText}>{errors.password}</Text>
             )}
           </View>
+
+          {errorMsg ? <Text style={authStyles.errorText}>{errorMsg}</Text> : null}
 
           <TouchableOpacity
             style={[

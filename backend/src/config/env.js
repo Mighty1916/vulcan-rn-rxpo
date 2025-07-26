@@ -1,3 +1,4 @@
+// Loads environment variables and exports them as ENV
 import "dotenv/config"
 
 export const ENV = {

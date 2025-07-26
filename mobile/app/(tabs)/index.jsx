@@ -578,7 +578,7 @@ export default function HomeScreen() {
                 style={[styles.slideImage, slide.imageStyle]} // ⬅ dynamic merge here
               />
               )}
-             {/*} <View style={styles.slideOverlay}>
+             {/* <View style={styles.slideOverlay}>
                 <Text style={styles.slideTitle}>{slide.title}</Text>
                 <Text style={styles.slideSubtitle}>{slide.subtitle}</Text>
                 <TouchableOpacity style={styles.slideButton}>
@@ -693,7 +693,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Next Match */}
-        <View style={styles.section}>
+        {/*<View style={styles.section}>
           <Text style={styles.sectionTitle}>Previous Match</Text>
           <View style={styles.matchCard}>
             <View style={styles.matchHeader}>
@@ -719,10 +719,10 @@ export default function HomeScreen() {
               <Text style={styles.matchButtonText}>View Details</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View>*/}
 
         {/* Recent Results */}
-        <View style={styles.section}>
+        {/*<View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Results</Text>
           <View style={styles.resultsContainer}>
             <View style={styles.resultCard}>
@@ -743,7 +743,7 @@ export default function HomeScreen() {
               <Text style={styles.resultDate}>United Premier League</Text>
             </View>
           </View>
-        </View>
+        </View>*/}
       </ScrollView>
 
       {/* Book Friendly Modal */}

@@ -4,6 +4,8 @@ import {COLORS} from "../../constants/colors"
 const { width: screenWidth } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
+  // Add comments to group related style blocks (slideshow, header, modal, calendar, etc.)
+  // Remove unused styles and ensure naming consistency
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
