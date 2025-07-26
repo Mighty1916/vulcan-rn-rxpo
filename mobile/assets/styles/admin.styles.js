@@ -203,14 +203,18 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#2C3E50',
   },
-  orderStatus: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#F39C12',
-    backgroundColor: '#FEF9E7',
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   orderCustomer: {
     fontSize: 14,
@@ -221,11 +225,117 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#27AE60',
+    marginBottom: 4,
+  },
+  orderDate: {
+    fontSize: 12,
+    color: '#7F8C8D',
     marginBottom: 12,
   },
   orderActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+
+  // View Button
+  viewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#D5D8DC',
+  },
+  viewButtonText: {
+    color: '#2C3E50',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+
+  // Order Details
+  orderDetailsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#D5D8DC',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F3F4',
+  },
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    flex: 1,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#7F8C8D',
+    flex: 2,
+    textAlign: 'right',
+  },
+  itemsSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#D5D8DC',
+  },
+  itemsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 12,
+  },
+  itemRow: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  itemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 4,
+  },
+  itemDetails: {
+    fontSize: 12,
+    color: '#7F8C8D',
+  },
+  notesSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#D5D8DC',
+  },
+  notesLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 8,
+  },
+  notesInput: {
+    borderWidth: 1,
+    borderColor: '#D5D8DC',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: '#2C3E50',
+    backgroundColor: '#F8F9FA',
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
 
   // Booking Cards

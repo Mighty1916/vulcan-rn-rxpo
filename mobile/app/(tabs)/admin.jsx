@@ -8,6 +8,7 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { 
   Shield, 
@@ -19,7 +20,12 @@ import {
   CheckCircle,
   XCircle,
   Edit,
-  Plus
+  Plus,
+  Eye,
+  DollarSign,
+  Package,
+  Truck,
+  CheckSquare
 } from 'lucide-react-native';
 import { styles } from '../../assets/styles/admin.styles';
 import { useUser } from '@clerk/clerk-expo';
@@ -55,6 +61,9 @@ export default function AdminScreen() {
   const [showBookingsModal, setShowBookingsModal] = useState(false);
   const [showApplicationsModal, setShowApplicationsModal] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
+  const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [adminNotes, setAdminNotes] = useState('');
 
   // Admin authentication
   useEffect(() => {
@@ -118,15 +127,78 @@ export default function AdminScreen() {
           'Content-Type': 'application/json',
           'admin-email': adminEmail
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, adminNotes })
       });
       
       if (response.ok) {
         Alert.alert('Success', 'Order status updated successfully');
+        setAdminNotes('');
         fetchAdminData(adminEmail);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to update order status');
+    }
+  };
+
+  const initiateRefund = async (orderId) => {
+    Alert.alert(
+      'Initiate Refund',
+      'Are you sure you want to initiate a refund for this order?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Refund',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await fetch(`https://vulcan-rn-rxpo-3.onrender.com/api/admin/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'admin-email': adminEmail
+                },
+                body: JSON.stringify({ 
+                  status: 'Refunded',
+                  adminNotes: adminNotes || 'Refund initiated by admin'
+                })
+              });
+              
+              if (response.ok) {
+                Alert.alert('Success', 'Refund initiated successfully');
+                setAdminNotes('');
+                fetchAdminData(adminEmail);
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Failed to initiate refund');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const viewOrderDetails = (order) => {
+    setSelectedOrder(order);
+    setShowOrderDetailsModal(true);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Pending': return COLORS.warning;
+      case 'Shipped': return COLORS.primary;
+      case 'Delivered': return COLORS.success;
+      case 'Refunded': return COLORS.error;
+      default: return COLORS.textLight;
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Pending': return <Package size={16} color={COLORS.white} />;
+      case 'Shipped': return <Truck size={16} color={COLORS.white} />;
+      case 'Delivered': return <CheckSquare size={16} color={COLORS.white} />;
+      case 'Refunded': return <DollarSign size={16} color={COLORS.white} />;
+      default: return <Package size={16} color={COLORS.white} />;
     }
   };
 
@@ -268,28 +340,138 @@ export default function AdminScreen() {
                 <View key={order.id} style={styles.orderCard}>
                   <View style={styles.orderHeader}>
                     <Text style={styles.orderId}>Order #{order.id}</Text>
-                    <Text style={styles.orderStatus}>{order.status}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+                      {getStatusIcon(order.status)}
+                      <Text style={styles.statusText}>{order.status}</Text>
+                    </View>
                   </View>
                   <Text style={styles.orderCustomer}>{order.userName}</Text>
                   <Text style={styles.orderTotal}>₹{order.total}</Text>
+                  <Text style={styles.orderDate}>
+                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
+                  </Text>
                   <View style={styles.orderActions}>
+                    <TouchableOpacity 
+                      style={styles.viewButton}
+                      onPress={() => viewOrderDetails(order)}
+                    >
+                      <Eye size={16} color={COLORS.primary} />
+                      <Text style={styles.viewButtonText}>View Details</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.statusButton, { backgroundColor: COLORS.success }]}
                       onPress={() => updateOrderStatus(order.id, 'Shipped')}
                     >
-                      <CheckCircle size={16} color={COLORS.white} />
+                      <Truck size={16} color={COLORS.white} />
                       <Text style={styles.statusButtonText}>Ship</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.statusButton, { backgroundColor: COLORS.warning }]}
                       onPress={() => updateOrderStatus(order.id, 'Delivered')}
                     >
-                      <CheckCircle size={16} color={COLORS.white} />
+                      <CheckSquare size={16} color={COLORS.white} />
                       <Text style={styles.statusButtonText}>Deliver</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.statusButton, { backgroundColor: COLORS.error }]}
+                      onPress={() => initiateRefund(order.id)}
+                    >
+                      <DollarSign size={16} color={COLORS.white} />
+                      <Text style={styles.statusButtonText}>Refund</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Order Details Modal */}
+      <Modal
+        visible={showOrderDetailsModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowOrderDetailsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Order Details</Text>
+              <TouchableOpacity onPress={() => setShowOrderDetailsModal(false)}>
+                <X size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              {selectedOrder && (
+                <View style={styles.orderDetailsCard}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Order ID:</Text>
+                    <Text style={styles.detailValue}>#{selectedOrder.id}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Customer:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.userName}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Email:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.userEmail}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Phone:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.userPhone}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Address:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.userAddress}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Pincode:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.userPincode}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Total:</Text>
+                    <Text style={styles.detailValue}>₹{selectedOrder.total}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Status:</Text>
+                    <Text style={[styles.detailValue, { color: getStatusColor(selectedOrder.status) }]}>
+                      {selectedOrder.status}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Date:</Text>
+                    <Text style={styles.detailValue}>
+                      {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString() : ''}
+                    </Text>
+                  </View>
+                  
+                  {selectedOrder.items && Array.isArray(selectedOrder.items) && (
+                    <View style={styles.itemsSection}>
+                      <Text style={styles.itemsTitle}>Order Items:</Text>
+                      {selectedOrder.items.map((item, index) => (
+                        <View key={index} style={styles.itemRow}>
+                          <Text style={styles.itemName}>{item.name}</Text>
+                          <Text style={styles.itemDetails}>
+                            Size: {item.size} | Qty: {item.quantity}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  <View style={styles.notesSection}>
+                    <Text style={styles.notesLabel}>Admin Notes:</Text>
+                    <TextInput
+                      style={styles.notesInput}
+                      placeholder="Add admin notes..."
+                      value={adminNotes}
+                      onChangeText={setAdminNotes}
+                      multiline
+                    />
+                  </View>
+                </View>
+              )}
             </ScrollView>
           </View>
         </View>
